@@ -8,13 +8,13 @@
 $latitude = $_POST['lat'];
 $longitude= $_POST['lon'];
 $time = $_POST['time'];
-$id = $_POST['ID'];
+$name = $_POST['name'];
 
 if(isset($latitude))
 {
 
 	$dbHandle = mysql_connect('localhost','root','pwd');
-
+	mysql_set_charset("utf8", $dbHandle);
 	if ($dbHandle == False)
 	{
 		print ('can not connect dbn');	
@@ -23,8 +23,8 @@ if(isset($latitude))
 
 	$db = 'map';
 
-	$sql = "INSERT INTO location (id,latitude,longitude,time)
-             VALUES ('$id','$latitude','$longitude','$time')";
+	$sql = "INSERT INTO location (name,latitude,longitude,time)
+             VALUES ('$name','$latitude','$longitude','$time')";
 
 	$rs = mysql_db_query($db,$sql);
 	if (!$rs)
