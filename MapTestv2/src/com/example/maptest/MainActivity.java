@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -174,11 +175,11 @@ public class MainActivity extends FragmentActivity {
 		
 		/*******************************flag1がtrueならば初期設定を行う******************************/
 		if(flag1){
-			//入力された名前が"Unsected"のままの場合
+			//入力された名前が"Unsected"である場合、警告を出し再入力させる
 			if(((String)sharedpreferences.getString("name","unknown")).equals("Unselected")){
 				first_setting();
 			}
-			//入力された名前が"Unselected"以外の場合
+			//入力された名前が"Unselected"以外の場合、重複をチェックする
 			else{
 				name_setting();
 			}
@@ -210,6 +211,39 @@ public class MainActivity extends FragmentActivity {
 		}
 		/*****************************************/
 		
+		
+		
+		/***************************ロングクリックによる現在地取得***************************/
+		map.setOnMapLongClickListener(new OnMapLongClickListener(){ 
+ 			@Override 
+			public void onMapLongClick(LatLng point){ 
+ 				
+ 				double mylat = point.latitude;
+				double mylon = point.longitude;
+				// 現在時刻を取得
+				Calendar calendar = Calendar.getInstance(tz);
+				SimpleDateFormat df = new SimpleDateFormat("HH:mm",
+						Locale.JAPANESE);
+				String temp = df.format(calendar.getTime());
+				
+				
+ 				
+ 				//スニペット:ユーザー名を取得 
+		    	String name_result = (String)sharedpreferences.getString("name","unknown");  		    	 
+		    	options1.position(point); 
+				icon_color(); 
+				options1.icon(icon); 
+				options1.title("ここ！"); 
+				options1.snippet(name_result); 
+				map.addMarker(options1);
+				//位置情報をデータベースに送信
+				InsertMyLocation post = new InsertMyLocation(mylat, mylon, temp,name_result);
+				post.execute();
+			 
+ 			} 
+		}); 
+		/************************************************************************************/
+
 		
 		
 		/************************************Nowボタンが押された時の処理****************************************/
@@ -294,7 +328,7 @@ public class MainActivity extends FragmentActivity {
 	}
 		
 	
-	/*****設定画面において、マーカー配置ボタンが押されたならば、falg2をtrueにする*****/
+	/*****設定画面において、マーカー配置ボタンが押されたならば、flag2をtrueにする*****/
 	@Override
 	public void onActivityResult( int requestCode, int resultCode, Intent intent ) {  
 		if(requestCode == SUB_ACTIVITY){
