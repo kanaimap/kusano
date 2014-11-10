@@ -26,7 +26,7 @@ public class ChangeIcon extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://10.110.131.244/change_icon_id.php";
+		String url = "";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair("ICON_ID", icon_id));
