@@ -59,6 +59,9 @@ public class MainActivity extends FragmentActivity {
 	//使用アイコン
 	int icon_id;
 	
+	String userid;
+	String abnormal = "none";
+	
 	//Preference取得用変数
 	SharedPreferences sharedpreferences ;
 	
@@ -104,10 +107,11 @@ public class MainActivity extends FragmentActivity {
 
 		//現在設定されている名前とマーカーを読み込む
 		sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		list_result = (String)sharedpreferences.getString("list","unknown");
-		before_list = (String)sharedpreferences.getString("list","unknown");
-		name_result = (String)sharedpreferences.getString("name","unknown");   
-		before_name = (String)sharedpreferences.getString("name","unknown");
+		list_result = (String)sharedpreferences.getString("list","Unselected");
+		before_list = (String)sharedpreferences.getString("list","Unselected");
+		name_result = (String)sharedpreferences.getString("name","Unselected");   
+		before_name = (String)sharedpreferences.getString("name","Unselected");
+		userid = (String)sharedpreferences.getString("userid","Unselected");
 		icon_color();
 		options1.icon(icon);
 
@@ -132,6 +136,26 @@ public class MainActivity extends FragmentActivity {
 		//名前が"Unselectedであるならば、初期設定へ
 		if(name_result.equals("Unselected")){
 			flag1 = true;
+			Editor editor = sharedpreferences.edit();
+			editor.putString("list","totoro");
+			editor.commit();
+			list_result = (String)sharedpreferences.getString("list","Unselected");
+			before_list = (String)sharedpreferences.getString("list","Unselected");
+		}
+		
+		
+		
+		if(!flag1){
+			CheckName check_name = new CheckName(name_result,userid,main);
+			check_name.execute();
+			if(!(abnormal.equals("none"))){
+				Editor editor = sharedpreferences.edit();
+				editor.putString("name",abnormal);
+				editor.commit();
+				name_result = abnormal;
+				before_name = abnormal;
+			}
+			
 		}
 		
 		// ズームボタンと現在地取得ボタンを可視化
@@ -176,7 +200,7 @@ public class MainActivity extends FragmentActivity {
 		/*******************************flag1がtrueならば初期設定を行う******************************/
 		if(flag1){
 			//入力された名前が"Unsected"である場合、警告を出し再入力させる
-			if(((String)sharedpreferences.getString("name","unknown")).equals("Unselected")){
+			if(((String)sharedpreferences.getString("name","Unselected")).equals("Unselected")){
 				first_setting();
 			}
 			//入力された名前が"Unselected"以外の場合、重複をチェックする
@@ -189,7 +213,7 @@ public class MainActivity extends FragmentActivity {
 		
 		
 		/*********************flag1がfalseかつ名前が変更されていれば、名前変更処理へ************************/
-		else if(!flag1 && !((String)sharedpreferences.getString("name","unknown")).equals(name_result)){
+		else if(!flag1 && !((String)sharedpreferences.getString("name","Unselected")).equals(name_result)){
 			change_name();
 		}
 		/***************************************************************************************************/
@@ -197,7 +221,7 @@ public class MainActivity extends FragmentActivity {
 		
 		
 		/*******************flag1がfalseかつマーカーが変更されいれば、マーカー変更処理へ********************/
-		else if(!flag1 && !((String)sharedpreferences.getString("list","unknown")).equals(list_result)){
+		else if(!flag1 && !((String)sharedpreferences.getString("list","Unselected")).equals(list_result)){
 			change_icon();
 		}
 		/***************************************************************************************************/
@@ -229,7 +253,7 @@ public class MainActivity extends FragmentActivity {
 				
  				
  				//スニペット:ユーザー名を取得 
-		    	String name_result = (String)sharedpreferences.getString("name","unknown");  		    	 
+		    	String name_result = (String)sharedpreferences.getString("name","Unselected");  		    	 
 		    	options1.position(point); 
 				icon_color(); 
 				options1.icon(icon); 
@@ -426,7 +450,7 @@ public class MainActivity extends FragmentActivity {
 	
 	/******************************マーカーの情報を設定から取る***********************************/
     public void icon_color(){
-    	String list_result = (String)sharedpreferences.getString("list","unknown");
+    	String list_result = (String)sharedpreferences.getString("list","Unselected");
     	if(list_result.equals("totoro")){
     		icon = BitmapDescriptorFactory.fromResource(R.drawable.totoro);
     		icon_id = 0;
@@ -464,8 +488,8 @@ public class MainActivity extends FragmentActivity {
     
     /**初期設定において、入力された名前が"Unselected"以外であったのならば、重複をチェックし、データベースに登録する**/
     public void name_setting(){
-    	name_result = (String)sharedpreferences.getString("name","unknown");
-    	list_result = (String)sharedpreferences.getString("list","unknown");
+    	name_result = (String)sharedpreferences.getString("name","Unselected");
+    	list_result = (String)sharedpreferences.getString("list","Unselected");
 		icon_color();
 		
 		//重複チェック
@@ -511,6 +535,19 @@ public class MainActivity extends FragmentActivity {
 			before_name = name_result;
 			before_list = list_result;
 			flag1 = false;	//初期設定が終了したため、flag1をfalseにする
+			GetMyId get_my_id = new GetMyId(this,name_result);
+			get_my_id.execute();
+			//１秒待つ
+    		try {
+    			Thread.sleep(1000);
+    		} catch (InterruptedException e1) {
+    			// TODO 自動生成された catch ブロック
+    			e1.printStackTrace();
+    		}
+			Editor editor = sharedpreferences.edit();
+			editor.putString("userid", userid);
+			editor.commit();
+
 		}
     }
     /****************************************************************************************************************/
@@ -520,7 +557,7 @@ public class MainActivity extends FragmentActivity {
     /*******************名前が変更されたならば、重複をチェックし、データベースを更新する********************/
     public void change_name(){
     	//変更後の名前が"Unselected"の場合、警告をだし、再入力させる
-    	if(((String)sharedpreferences.getString("name","unknown")).equals("Unselected")){
+    	if(((String)sharedpreferences.getString("name","Unselected")).equals("Unselected")){
     		Toast.makeText(this, "Unselected以外の名前を登録してください", Toast.LENGTH_LONG).show();
     		name_result = before_name;
 			list_result = before_list;
@@ -533,8 +570,8 @@ public class MainActivity extends FragmentActivity {
     	}
     	//入力された名前が"Unselected"以外の場合
     	else{
-    		name_result = (String)sharedpreferences.getString("name","unknown");
-    		list_result = (String)sharedpreferences.getString("list","unknown");
+    		name_result = (String)sharedpreferences.getString("name","Unselected");
+    		list_result = (String)sharedpreferences.getString("list","Unselected");
     		icon_color();
     		
     		//重複チェック
@@ -588,8 +625,8 @@ public class MainActivity extends FragmentActivity {
     
     /****************マーカーが変更されたならば、データベースを更新する**************/
     public void change_icon(){
-    	name_result = (String)sharedpreferences.getString("name","unknown");
-		list_result = (String)sharedpreferences.getString("list","unknown");
+    	name_result = (String)sharedpreferences.getString("name","Unselected");
+		list_result = (String)sharedpreferences.getString("list","Unselected");
 		icon_color();
 		ChangeIcon change_icon = new ChangeIcon(icon_id,name_result);
 		change_icon.execute();

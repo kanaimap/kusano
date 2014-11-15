@@ -15,11 +15,14 @@
             android:dialogTitle="@string/list_dialogtitle"
             android:entries="@array/list_entries"
             android:entryValues="@array/list_entryvalues" />
+     
          
         <Preference 
             android:title="マーカー配置"
             android:key="button"
             android:summary="マーカー配置"/>
+
+        
     </PreferenceCategory>
     
 </PreferenceScreen>

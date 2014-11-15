@@ -28,7 +28,7 @@ public class InsertMyLocation extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "";
+		String url = "http://******************/insert_mysql.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 
 		HttpPost post = new HttpPost(url);

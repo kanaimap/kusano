@@ -48,7 +48,6 @@ public class Setting extends PreferenceActivity
 		// サマリーの設定
 		setSummary(list, param_list);
 		setSummary(name, param_name);
-		
 		//マーカー配置ボタン
 		Preference button = (Preference)findPreference("button");
 		button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

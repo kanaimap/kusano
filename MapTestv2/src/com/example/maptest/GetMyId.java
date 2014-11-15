@@ -16,13 +16,12 @@ import android.os.AsyncTask;
 
 
 //重複をチェックするAsyncTask
-public class CheckDuplication extends AsyncTask<Void, Void, Void> {
+public class GetMyId extends AsyncTask<Void, Void, Void> {
 	
-	String name;
 	MainActivity main;
-	String r  ="";
+	String name,id;
 	
-	public CheckDuplication(String name,MainActivity main){
+	public GetMyId(MainActivity main,String name){
 		this.name =name;
 		this.main = main;
 	}
@@ -30,7 +29,7 @@ public class CheckDuplication extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://*************/check_duplication.php";
+		String url = "http://********************/get_my_id.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(1);
 		params.add(new BasicNameValuePair("name", name));
@@ -43,10 +42,9 @@ public class CheckDuplication extends AsyncTask<Void, Void, Void> {
 		}
 		try {
 			HttpResponse response = http.execute(post);
-			r = EntityUtils.toString(response.getEntity(), "UTF-8");
-			if(r.equals("duplication")){
-				main.check = r;
-			}
+			id = EntityUtils.toString(response.getEntity(), "UTF-8").trim();
+			main.userid = id;
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
