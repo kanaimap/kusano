@@ -60,7 +60,7 @@ public class MainActivity extends FragmentActivity {
 	int icon_id;
 	
 	String userid;
-	String abnormal = "none";
+	String abnormal_termination = "none";
 	
 	//Preference取得用変数
 	SharedPreferences sharedpreferences ;
@@ -79,18 +79,23 @@ public class MainActivity extends FragmentActivity {
 	
 	//JSON形式の位置情報を処理するための変数群
 	String json = "";
-	int number;
-	int[] id;
-	double[] latitude, longitude;
-	String[] name,time;
+	int database_number;
+	int[] database_id;
+	double[] database_latitude, database_longitude;
+	String[] database_name,database_time;
 	
-	//名前の初期設定が必要であるかを判断するフラグ
+	//初期設定が必要であるかを判断するフラグ
 	boolean flag1 = false;
 	//設定画面において、マーカー配置が押された場合にtureとなるフラグ
 	boolean flag2 = false;
 	
 
 	static final int SUB_ACTIVITY = 1001;
+	
+	//現在時刻取得用の変数群
+	Calendar calendar;
+	String time;
+	SimpleDateFormat df;
 	
 
 	// 初期画面を構成
@@ -105,7 +110,7 @@ public class MainActivity extends FragmentActivity {
 		}catch(ClassNotFoundException e){}
 
 
-		//現在設定されている名前とマーカーを読み込む
+		//現在設定されている名前とマーカー、ユーザーIDを読み込む
 		sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		list_result = (String)sharedpreferences.getString("list","Unselected");
 		before_list = (String)sharedpreferences.getString("list","Unselected");
@@ -130,11 +135,11 @@ public class MainActivity extends FragmentActivity {
 		// タイマーOFFボタンをクリック禁止に
 		mButton3.setEnabled(false);
 
-		// 初期位置 = 法政大学を中心とする
+		// 初期位置を法政大学とする
 		moveToFirstRocation();
 		
-		//名前が"Unselectedであるならば、初期設定へ
-		if(name_result.equals("Unselected")){
+		//名前とユーザーIDが共に設定されていないならば、初期設定へ
+		if(name_result.equals("Unselected") && userid == "Unselected"){
 			flag1 = true;
 			Editor editor = sharedpreferences.edit();
 			editor.putString("list","totoro");
@@ -145,18 +150,29 @@ public class MainActivity extends FragmentActivity {
 		
 		
 		
+		//端末側の名前とデータベース側の名前の矛盾をチェックする
 		if(!flag1){
 			CheckName check_name = new CheckName(name_result,userid,main);
 			check_name.execute();
-			if(!(abnormal.equals("none"))){
+			//１秒待つ
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				// TODO 自動生成された catch ブロック
+				e1.printStackTrace();
+			}
+			
+			//矛盾していた場合は修正する
+			if(!(abnormal_termination.equals("none"))){
 				Editor editor = sharedpreferences.edit();
-				editor.putString("name",abnormal);
+				editor.putString("name",abnormal_termination);
 				editor.commit();
-				name_result = abnormal;
-				before_name = abnormal;
+				name_result = abnormal_termination;
+				before_name = abnormal_termination;
 			}
 			
 		}
+		
 		
 		// ズームボタンと現在地取得ボタンを可視化
 		UiSettings settings = map.getUiSettings();
@@ -199,7 +215,7 @@ public class MainActivity extends FragmentActivity {
 		
 		/*******************************flag1がtrueならば初期設定を行う******************************/
 		if(flag1){
-			//入力された名前が"Unsected"である場合、警告を出し再入力させる
+			//入力された名前が"Unselected"である場合、警告を出し再入力させる
 			if(((String)sharedpreferences.getString("name","Unselected")).equals("Unselected")){
 				first_setting();
 			}
@@ -242,26 +258,26 @@ public class MainActivity extends FragmentActivity {
  			@Override 
 			public void onMapLongClick(LatLng point){ 
  				
+ 				//現在地を取得する
  				double mylat = point.latitude;
-				double mylon = point.longitude;
-				// 現在時刻を取得
-				Calendar calendar = Calendar.getInstance(tz);
-				SimpleDateFormat df = new SimpleDateFormat("HH:mm",
+				double mylon = point.longitude;				
+				options1.position(point);
+				//名前を取得する
+		    	String name_result = (String)sharedpreferences.getString("name","Unselected");  		
+		    	//マーカー画像を設定する
+				icon_color();
+				//現在時刻を取得する
+				calendar = Calendar.getInstance(tz);
+				df = new SimpleDateFormat("HH:mm",
 						Locale.JAPANESE);
-				String temp = df.format(calendar.getTime());
+				time = df.format(calendar.getTime());
 				
-				
- 				
- 				//スニペット:ユーザー名を取得 
-		    	String name_result = (String)sharedpreferences.getString("name","Unselected");  		    	 
-		    	options1.position(point); 
-				icon_color(); 
-				options1.icon(icon); 
-				options1.title("ここ！"); 
-				options1.snippet(name_result); 
+				options1.icon(icon);
+				//マーカー配置
+				options1.title("今ここ！at " + time + " by" + name_result);
 				map.addMarker(options1);
 				//位置情報をデータベースに送信
-				InsertMyLocation post = new InsertMyLocation(mylat, mylon, temp,name_result);
+				InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result);
 				post.execute();
 			 
  			} 
@@ -294,21 +310,21 @@ public class MainActivity extends FragmentActivity {
 					map.moveCamera(cu);
 
 					// 現在時刻を取得
-					Calendar calendar = Calendar.getInstance(tz);
-					SimpleDateFormat df = new SimpleDateFormat("HH:mm",
+					calendar = Calendar.getInstance(tz);
+					df = new SimpleDateFormat("HH:mm",
 							Locale.JAPANESE);
-					String temp = df.format(calendar.getTime());
+					time = df.format(calendar.getTime());
 					
 					icon_color();
 					
 					options1.icon(icon);
 					
 					// アイコンを配置
-					options1.title("今ここ！at " + temp + " by" + name_result);
+					options1.title("今ここ！at " + time + " by" + name_result);
 					map.addMarker(options1);
 					
 					//位置情報をデータベースに送信
-					InsertMyLocation post = new InsertMyLocation(mylat, mylon, temp,name_result);
+					InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result);
 					post.execute();
 				}
 			}
@@ -348,7 +364,7 @@ public class MainActivity extends FragmentActivity {
 				stopService(new Intent(MainActivity.this, AutoGetLocation.class));
 			}
 		});
-		/*****************************************************************************************************/	
+		/**************************************************************************************************/	
 	}
 		
 	
@@ -386,37 +402,38 @@ public class MainActivity extends FragmentActivity {
 	
 	
 
-	/********************データベースから位置情報を取得しアイコンを配置するメソッド****************************/
+	/********************データベースから位置情報を取得しマーカーを配置するメソッド*******************************/
 	public void putmarker() {
-		
 		/*************データベースから位置情報を取得******************/
 		GetAllLocation post = new GetAllLocation(this);
 		post.execute();
-		////////////////////////////////////////////////////////////////////////////////////////
+		
+		//１秒待つ
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {
 			// TODO 自動生成された catch ブロック
 			e1.printStackTrace();
 		}
-		//////////////////////////////////////////////////////////////////////////////////////////
+		
+		//データベースから受け取ったJSON形式のデータを分解し、配列に格納する
 		try {
 			JSONArray jsonArray = new JSONArray(json);
-			name = new String[jsonArray.length()];
-			latitude = new double[jsonArray.length()];
-			longitude = new double[jsonArray.length()];
-			time = new String[jsonArray.length()];
-			id = new int[jsonArray.length()];
-			number = jsonArray.length();
-			for (int i = 0; i < number; i++) {
+			database_name = new String[jsonArray.length()];
+			database_latitude = new double[jsonArray.length()];
+			database_longitude = new double[jsonArray.length()];
+			database_time = new String[jsonArray.length()];
+			database_id = new int[jsonArray.length()];
+			database_number = jsonArray.length();
+			for (int i = 0; i < database_number; i++) {
 
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
 				
-				name[i] = jsonObject.getString("name");
-				latitude[i] = jsonObject.getDouble("latitude");
-				longitude[i] = jsonObject.getDouble("longitude");
-				time[i] = jsonObject.getString("time");
-				id[i] = jsonObject.getInt("icon_id");
+				database_name[i] = jsonObject.getString("name");
+				database_latitude[i] = jsonObject.getDouble("latitude");
+				database_longitude[i] = jsonObject.getDouble("longitude");
+				database_time[i] = jsonObject.getString("time");
+				database_id[i] = jsonObject.getInt("icon_id");
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -425,13 +442,13 @@ public class MainActivity extends FragmentActivity {
 		
 		
 		
-		/************取得した位置情報をもとにアイコンを配置***************************************************/
-		for (int i = 0; i < number; ++i) {
+		/************取得した位置情報をもとにマーカーを配置***************************************************/
+		for (int i = 0; i < database_number; ++i) {
 			// 緯度、経度を読み込み、マーカーを打つ位置を設定する
-			LatLng position = new LatLng(latitude[i], longitude[i]);
+			LatLng position = new LatLng(database_latitude[i], database_longitude[i]);
 			options1.position(position);
 			
-			switch(id[i]){
+			switch(database_id[i]){
     		case 0: icon = BitmapDescriptorFactory.fromResource(R.drawable.totoro); break;
     		case 1: icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE); break;
     		case 2: icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN); break;
@@ -439,7 +456,7 @@ public class MainActivity extends FragmentActivity {
     	}
 			options1.icon(icon);
 			// マーカーを打つ
-			options1.title("今ここ! at " + time[i] + " by" + name[i]);
+			options1.title("今ここ! at " + database_time[i] + " by" + database_name[i]);
 			map.addMarker(options1);
 		}
 		/*****************************************************************************************************/
@@ -448,7 +465,7 @@ public class MainActivity extends FragmentActivity {
 
 	
 	
-	/******************************マーカーの情報を設定から取る***********************************/
+	/******************************使用するマーカーを設定する************************************/
     public void icon_color(){
     	String list_result = (String)sharedpreferences.getString("list","Unselected");
     	if(list_result.equals("totoro")){
@@ -471,7 +488,7 @@ public class MainActivity extends FragmentActivity {
     /*********************************************************************************************/
     
     
-    /**********初期設定において、入力された名前が"Unselected"のままの場合は再入力させる**********/
+    /**********初期設定において、入力された名前が"Unselected"のままの場合は、再入力させる**********/
     public void first_setting(){
     	Toast.makeText(this, "Unselected以外の名前を登録してください", Toast.LENGTH_LONG).show();
     	list_result = before_list;
@@ -483,7 +500,7 @@ public class MainActivity extends FragmentActivity {
 		editor.commit();
     	startActivity(new Intent(this, Setting.class));
     }
-    /*********************************************************************************************/
+    /**********************************************************************************************/
     
     
     /**初期設定において、入力された名前が"Unselected"以外であったのならば、重複をチェックし、データベースに登録する**/
@@ -523,7 +540,9 @@ public class MainActivity extends FragmentActivity {
 		//重複していなかった場合、データベースに名前とマーカー情報を登録する
 		else{
 			SetMyNameAndIconID set_iconID_and_name = new SetMyNameAndIconID(icon_id,name_result,this);
-			set_iconID_and_name.execute();			
+			set_iconID_and_name.execute();
+			
+			//メッセージボックスを表示し、登録が完了したことを知らせる
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 	    	alertDialogBuilder.setMessage("登録完了です");
 	    	alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -532,9 +551,12 @@ public class MainActivity extends FragmentActivity {
 	        });
 	    	alertDialogBuilder.create();
 	        alertDialogBuilder.show();
+	        
 			before_name = name_result;
 			before_list = list_result;
 			flag1 = false;	//初期設定が終了したため、flag1をfalseにする
+			
+			//データベースによって自動的に割り当てられたユーザーIDを取得し、記録する
 			GetMyId get_my_id = new GetMyId(this,name_result);
 			get_my_id.execute();
 			//１秒待つ
@@ -608,6 +630,8 @@ public class MainActivity extends FragmentActivity {
 				change_name.execute();
 				before_name = name_result;
 				before_list = list_result;
+				
+				//メッセージボックスを表示し、変更が完了したことを知らせる
 				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 		    	alertDialogBuilder.setMessage("変更完了です");
 		    	alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -630,6 +654,8 @@ public class MainActivity extends FragmentActivity {
 		icon_color();
 		ChangeIcon change_icon = new ChangeIcon(icon_id,name_result);
 		change_icon.execute();
+		
+		//メッセージボックスを表示し、変更が完了したことを知らせる
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
     	alertDialogBuilder.setMessage("変更完了です");
     	alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {

@@ -13,12 +13,13 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
-//バックグラウンドで位置情報を取得するService
+//バックグラウンドで位置情報を取得し、データベースに送信するService
 public class AutoGetLocation extends Service implements LocationListener {
-	private final static long mintime = 10000;
+	private final static long mintime = 0;
 	private final static float mindistance = 0;
-
+	
 	boolean p;
 	String name_result;
 	
@@ -30,14 +31,14 @@ public class AutoGetLocation extends Service implements LocationListener {
 	
 	@Override
 	public void onCreate() {
-		sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		name_result = (String)sharedpreferences.getString("name","unknown");
 	}
 
-	// 200mごとにgpsかnetworkを用いて現在地を取得
+	// 設定に従い、gpsかnetworkを用いて現在地を取得(mintime,mindistance参照)
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		myLocation = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		name_result = (String)sharedpreferences.getString("name","unknown");
 
 		// 使用providerを確認
 		String provider = "";
@@ -51,15 +52,17 @@ public class AutoGetLocation extends Service implements LocationListener {
 			provider = "network";
 			p = false;
 		}
-
+		
+		Toast.makeText(this,"自動更新開始",Toast.LENGTH_SHORT).show();
 		myLocation.requestLocationUpdates(provider, mintime, mindistance, this);
 		return START_STICKY;
 	}
 
-	// Service終了処理. 現在地の取得を停止
+	// Service終了処理:現在地の取得を停止
 	@Override
 	public void onDestroy() {
 		myLocation.removeUpdates(this);
+		Toast.makeText(this,"自動更新終了",Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
@@ -72,14 +75,15 @@ public class AutoGetLocation extends Service implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 
-		// 現在時刻を取得し、データベースに送信
+		// 現在時刻を取得する
 		SimpleDateFormat df = new SimpleDateFormat("HH:mm", Locale.JAPANESE);
 		String time = df.format(location.getTime());
 
 		double latitude, longitude;
 		latitude = location.getLatitude();
 		longitude = location.getLongitude();
-
+		
+		//データベースに位置情報を送信
 		InsertMyLocation post = new InsertMyLocation(latitude, longitude, time,name_result);
 		post.execute();
 	}

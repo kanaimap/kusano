@@ -15,10 +15,10 @@ import org.apache.http.util.EntityUtils;
 import android.os.AsyncTask;
 
 
-//重複をチェックするAsyncTask
+//端末側の名前とデータベース側の名前の矛盾をチェックするAsyncTask
 public class CheckName extends AsyncTask<Void, Void, Void> {
 	
-	String name,id,abnormal;
+	String name,id,abnormal_termination;
 	MainActivity main;
 	
 	public CheckName(String name,String id,MainActivity main){
@@ -30,7 +30,7 @@ public class CheckName extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://**************/check_name.php";
+		String url = "http://*****/check_name.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(2);
 		params.add(new BasicNameValuePair("name", name));
@@ -44,8 +44,8 @@ public class CheckName extends AsyncTask<Void, Void, Void> {
 		}
 		try {
 			HttpResponse response = http.execute(post);
-			abnormal = EntityUtils.toString(response.getEntity(), "UTF-8").trim();
-			main.abnormal = abnormal;
+			abnormal_termination = EntityUtils.toString(response.getEntity(), "UTF-8").trim();
+			main.abnormal_termination = abnormal_termination;
 			
 		} catch (IOException e) {
 			e.printStackTrace();

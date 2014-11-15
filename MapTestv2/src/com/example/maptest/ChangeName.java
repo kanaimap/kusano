@@ -13,7 +13,7 @@ import org.apache.http.message.BasicNameValuePair;
 import android.os.AsyncTask;
 
 
-//名前とマーカー情報を更新するAyncTask
+//名前とマーカー情報を更新するAsyncTask
 public class ChangeName extends AsyncTask<Void, Void, Void> {
 	
 	String name_result,before_name,icon_id;
@@ -27,7 +27,7 @@ public class ChangeName extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://************/change_name.php";
+		String url = "http://*****/change_name.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(3);
 		params.add(new BasicNameValuePair("name_result", name_result));

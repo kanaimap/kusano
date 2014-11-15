@@ -32,7 +32,7 @@ public class SetMyNameAndIconID extends AsyncTask<String, String, String> {
 	@Override
 	protected String doInBackground(String... unused) {
 
-		String url = "http://******************/set_iconID_and_name.php";
+		String url = "http://*****/set_iconID_and_name.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(2);
 		params.add(new BasicNameValuePair("name", name));

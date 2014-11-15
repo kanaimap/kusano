@@ -30,7 +30,7 @@ public class CheckDuplication extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://*************/check_duplication.php";
+		String url = "http://*****/check_duplication.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(1);
 		params.add(new BasicNameValuePair("name", name));
