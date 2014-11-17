@@ -18,6 +18,7 @@ public class Setting extends PreferenceActivity
 	 // Preference
 	private ListPreference list;
 	private EditTextPreference name;
+	private EditTextPreference comment;
 	
 
 	
@@ -30,10 +31,12 @@ public class Setting extends PreferenceActivity
 		 // Preferenceの取得
 		list = (ListPreference)findPreference("list");
 		name = (EditTextPreference)findPreference("name");
+		comment = (EditTextPreference)findPreference("comment");
 		
 		// リスナーを設定する
 		list.setOnPreferenceChangeListener(this);
 		name.setOnPreferenceChangeListener(this);
+		comment.setOnPreferenceChangeListener(this);
 		
 		Intent intent = getIntent();
 		String data = intent.getStringExtra("key");
@@ -44,10 +47,12 @@ public class Setting extends PreferenceActivity
 		// 値の取得
 		String param_list = p.getString("list", "Unselected");
 		String param_name = p.getString("name", "Unselected");
+		String param_comment = p.getString("comment","今ここ");
 		
 		// サマリーの設定
 		setSummary(list, param_list);
 		setSummary(name, param_name);
+		setSummary(comment,param_comment);
 		//マーカー配置ボタン
 		Preference button = (Preference)findPreference("button");
 		button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

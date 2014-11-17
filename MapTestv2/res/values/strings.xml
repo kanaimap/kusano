@@ -16,6 +16,9 @@
 	<string name="name_title">User name</string>
 	<string name="name_summary">----</string>
 	<string name="name_dialogtitle">namepreference</string>
+	<string name="comment_title">Comment</string>
+	<string name="comment_summary">----</string>
+	<string name="comment_dialogtitle">commentpreference</string>
 </resources>
 
 

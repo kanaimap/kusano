@@ -15,6 +15,12 @@
             android:dialogTitle="@string/list_dialogtitle"
             android:entries="@array/list_entries"
             android:entryValues="@array/list_entryvalues" />
+        
+        <EditTextPreference
+            android:key="comment"
+            android:title="@string/comment_title"
+            android:summary="@string/comment_summary"
+            android:dialogTitle="@string/comment_dialogtitle" />
      
          
         <Preference 

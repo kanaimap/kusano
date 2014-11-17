@@ -30,7 +30,7 @@ public class GetAllLocation extends AsyncTask<String, String, String> {
 	@Override
 	protected String doInBackground(String... unused) {
 
-		String url = "http://*****/get_mysql.php";
+		String url = "http://10.29.31.66/get_mysql.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		HttpPost post = new HttpPost(url);
 

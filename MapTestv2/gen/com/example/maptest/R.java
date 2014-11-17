@@ -1659,6 +1659,9 @@ containing a value of this type.
         public static final int auth_client_play_services_err_notification_msg=0x7f060004;
         public static final int auth_client_requested_by_msg=0x7f060005;
         public static final int auth_client_using_bad_version_title=0x7f060000;
+        public static final int comment_dialogtitle=0x7f06003e;
+        public static final int comment_summary=0x7f06003d;
+        public static final int comment_title=0x7f06003c;
         /**  Button in confirmation dialog to enable Google Play services.  Clicking it
         will direct user to application settings of Google Play services where they
         can enable it [CHAR LIMIT=40] 

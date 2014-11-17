@@ -84,7 +84,7 @@ public class AutoGetLocation extends Service implements LocationListener {
 		longitude = location.getLongitude();
 		
 		//データベースに位置情報を送信
-		InsertMyLocation post = new InsertMyLocation(latitude, longitude, time,name_result);
+		InsertMyLocation post = new InsertMyLocation(latitude, longitude, time,name_result,"今ここ");
 		post.execute();
 	}
 

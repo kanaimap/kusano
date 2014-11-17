@@ -74,6 +74,8 @@ public class MainActivity extends FragmentActivity {
 	//ひとつ前に利用していたマーカーの情報を保管する変数
 	String before_list;
 	
+	String comment;
+	
 	//名前の重複チェック用変数
 	String check ="";
 	
@@ -82,12 +84,14 @@ public class MainActivity extends FragmentActivity {
 	int database_number;
 	int[] database_id;
 	double[] database_latitude, database_longitude;
-	String[] database_name,database_time;
+	String[] database_name,database_time,database_comment;
 	
 	//初期設定が必要であるかを判断するフラグ
 	boolean flag1 = false;
 	//設定画面において、マーカー配置が押された場合にtureとなるフラグ
 	boolean flag2 = false;
+	
+	boolean server = false;
 	
 
 	static final int SUB_ACTIVITY = 1001;
@@ -148,6 +152,26 @@ public class MainActivity extends FragmentActivity {
 			before_list = (String)sharedpreferences.getString("list","Unselected");
 		}
 		
+		CheckServer checkserver = new CheckServer(this);
+		checkserver.execute();
+		//１秒待つ
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			// TODO 自動生成された catch ブロック
+			e1.printStackTrace();
+		}
+		if(!server){
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+	    	alertDialogBuilder.setMessage("現在サーバーが利用できません");
+	    	alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	           public void onClick(DialogInterface dialog, int which) {
+	            }
+	           
+	        });
+	    	alertDialogBuilder.create();
+	        alertDialogBuilder.show();
+		}
 		
 		
 		//端末側の名前とデータベース側の名前の矛盾をチェックする
@@ -178,6 +202,7 @@ public class MainActivity extends FragmentActivity {
 		UiSettings settings = map.getUiSettings();
 		settings.setZoomControlsEnabled(true);
 		map.setMyLocationEnabled(true);
+		
 	}
 	
 	 //メッセージを表示する
@@ -274,11 +299,16 @@ public class MainActivity extends FragmentActivity {
 				
 				options1.icon(icon);
 				//マーカー配置
-				options1.title("今ここ！at " + time + " by" + name_result);
-				map.addMarker(options1);
+				
+				comment = (String)sharedpreferences.getString("comment","今ここ");
+				
 				//位置情報をデータベースに送信
-				InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result);
+				InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result,comment);
 				post.execute();
+				
+				options1.title(comment +"at " + time + " by" + name_result);
+				map.addMarker(options1);
+				
 			 
  			} 
 		}); 
@@ -319,13 +349,15 @@ public class MainActivity extends FragmentActivity {
 					
 					options1.icon(icon);
 					
+					//位置情報をデータベースに送信
+					InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result,"今ここ");
+					post.execute();
+					
 					// アイコンを配置
 					options1.title("今ここ！at " + time + " by" + name_result);
 					map.addMarker(options1);
 					
-					//位置情報をデータベースに送信
-					InsertMyLocation post = new InsertMyLocation(mylat, mylon, time,name_result);
-					post.execute();
+					
 				}
 			}
 		});
@@ -423,8 +455,10 @@ public class MainActivity extends FragmentActivity {
 			database_latitude = new double[jsonArray.length()];
 			database_longitude = new double[jsonArray.length()];
 			database_time = new String[jsonArray.length()];
+			database_comment = new String[jsonArray.length()];
 			database_id = new int[jsonArray.length()];
 			database_number = jsonArray.length();
+			
 			for (int i = 0; i < database_number; i++) {
 
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -434,6 +468,7 @@ public class MainActivity extends FragmentActivity {
 				database_longitude[i] = jsonObject.getDouble("longitude");
 				database_time[i] = jsonObject.getString("time");
 				database_id[i] = jsonObject.getInt("icon_id");
+				database_comment[i] = jsonObject.getString("comment");
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -456,7 +491,7 @@ public class MainActivity extends FragmentActivity {
     	}
 			options1.icon(icon);
 			// マーカーを打つ
-			options1.title("今ここ! at " + database_time[i] + " by" + database_name[i]);
+			options1.title(database_comment[i] + "at " + database_time[i] + " by" + database_name[i]);
 			map.addMarker(options1);
 		}
 		/*****************************************************************************************************/

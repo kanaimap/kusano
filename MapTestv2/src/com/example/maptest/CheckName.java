@@ -30,7 +30,7 @@ public class CheckName extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://*****/check_name.php";
+		String url = "http://10.29.31.66/check_name.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(2);
 		params.add(new BasicNameValuePair("name", name));

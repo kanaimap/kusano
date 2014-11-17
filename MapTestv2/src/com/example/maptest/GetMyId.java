@@ -29,7 +29,7 @@ public class GetMyId extends AsyncTask<Void, Void, Void> {
 	@Override
 	protected Void doInBackground(Void... unused) {
 
-		String url = "http://*****/get_my_id.php";
+		String url = "http://10.29.31.66/get_my_id.php";
 		DefaultHttpClient http = new DefaultHttpClient();
 		List<NameValuePair> params = new ArrayList<NameValuePair>(1);
 		params.add(new BasicNameValuePair("name", name));
