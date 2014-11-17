@@ -9,6 +9,7 @@ $latitude = $_POST['lat'];
 $longitude= $_POST['lon'];
 $time = $_POST['time'];
 $name = $_POST['name'];
+$comment = $_POST['comment'];
 
 if(isset($latitude))
 {
@@ -23,8 +24,8 @@ if(isset($latitude))
 
 	$db = 'map';
 
-	$sql = "INSERT INTO location (name,latitude,longitude,time)
-             VALUES ('$name','$latitude','$longitude','$time')";
+	$sql = "INSERT INTO location (name,latitude,longitude,time,comment)
+             VALUES ('$name','$latitude','$longitude','$time','$comment')";
 
 	$rs = mysql_db_query($db,$sql);
 	if (!$rs)
