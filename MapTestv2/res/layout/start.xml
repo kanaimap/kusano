@@ -13,34 +13,4 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:src="@drawable/totoro" />
-
-    <SlidingDrawer
-        android:id="@+id/slidingDrawer1"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:content="@+id/content"
-        android:handle="@+id/handle"
-        android:topOffset="320dp" >
-
-        <Button
-            android:id="@+id/handle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Handle" />
-
-        <LinearLayout
-            android:id="@+id/content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-             android:background="#d3d3d3" >
-
-            <Button
-                android:id="@+id/button1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Button" />
-
-        </LinearLayout>
-    </SlidingDrawer>
-
 </LinearLayout>
