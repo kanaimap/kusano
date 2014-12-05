@@ -4,12 +4,10 @@
         <item>totoro</item>
         <item>blue</item>
         <item>green</item>
-        <item>footprint</item>
     </string-array>
      <string-array name="list_entryvalues">
         <item>totoro</item>
         <item>blue</item>
         <item>green</item>
-        <item>footprint</item>
     </string-array>
 </resources>

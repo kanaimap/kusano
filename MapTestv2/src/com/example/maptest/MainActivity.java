@@ -1,6 +1,9 @@
 package com.example.maptest;
 
+import static java.lang.Math.*;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -36,7 +39,9 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 
 public class MainActivity extends FragmentActivity {
 	// map操作用変数
@@ -47,9 +52,18 @@ public class MainActivity extends FragmentActivity {
 
 	// 法政大学に打つマーカ
 	MarkerOptions options2 = new MarkerOptions();
+	
+	//足跡配置用
+	MarkerOptions options3 = new MarkerOptions();
+	
+	//現在地強調表示用
+	MarkerOptions options4 = new MarkerOptions();
+	
+	//配置されたすべてのマーカーの情報を補完する配列。マーカーの全削除に利用する
+	ArrayList<Marker> all_marker_list = new ArrayList<Marker>();
 
 	// ボタン用変数
-	Button mButton1;
+	Button mButton1,mButton2,mButton3;
 	ToggleButton tb1;
 
 	// タイムゾーン取得用変数
@@ -61,8 +75,11 @@ public class MainActivity extends FragmentActivity {
 
 	// 使用アイコン
 	int icon_id;
-
+	
+	//ユーザーID
 	String userid;
+	
+	//不正終了情報を格納する変数
 	String abnormal_termination = "none";
 
 	// Preference取得用変数
@@ -76,7 +93,7 @@ public class MainActivity extends FragmentActivity {
 	String list_result;
 	// ひとつ前に利用していたマーカーの情報を保管する変数
 	String before_list;
-
+	//マーカーに付与するコメントを保管する変数
 	String comment;
 
 	// 名前の重複チェック用変数
@@ -85,15 +102,18 @@ public class MainActivity extends FragmentActivity {
 	// JSON形式の位置情報を処理するための変数群
 	String json = "";
 	int database_number;
-	int[] database_id;
-	double[] database_latitude, database_longitude;
-	String[] database_name, database_time, database_comment;
+	ArrayList<Integer> database_id = new ArrayList<Integer>();
+	ArrayList<Double> database_latitude = new ArrayList<Double>();
+	ArrayList<Double> database_longitude = new ArrayList<Double>();
+	ArrayList<String> database_name = new ArrayList<String>();
+	ArrayList<String> database_time = new ArrayList<String>();
+	ArrayList<String> database_comment = new ArrayList<String>();
 
 	// 初期設定が必要であるかを判断するフラグ
 	boolean flag1 = false;
 	// 設定画面において、マーカー配置が押された場合にtureとなるフラグ
 	boolean flag2 = false;
-
+	//サーバーが稼働しているか否かを格納するフラグ
 	boolean server = false;
 
 	static final int SUB_ACTIVITY = 1001;
@@ -102,6 +122,10 @@ public class MainActivity extends FragmentActivity {
 	Calendar calendar;
 	String time;
 	SimpleDateFormat df;
+	
+	//http通信用変数
+	Http.Request request;
+	Http.Response response;
 
 	// 初期画面を構成
 	@Override
@@ -128,21 +152,32 @@ public class MainActivity extends FragmentActivity {
 		userid = (String) sharedpreferences.getString("userid", "Unselected");
 		icon_color();
 		options1.icon(icon);
-
+		
+		//マップを表示する
 		setContentView(R.layout.activity_main);
-
 		map = ((SupportMapFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.map)).getMap();
-
 		MapsInitializer.initialize(this);
+		
+		//足跡配置用optionsの設定
+		options3.icon(BitmapDescriptorFactory
+				.fromResource(R.drawable.footprint));
+		
+		//現在地強調表示用のoptionの設定
+		options4.icon(BitmapDescriptorFactory
+				.fromResource(R.drawable.now));
 
-		// ボタン割り当て
+		// ボタン割り当て mButton1:nowボタン mButton2:マーカー全削除ボタン mButton3:ユーザ一覧表示ボタン tb1:自動更新機能のON/OFFボタン
+		//mButton2およびmButton3はテスト用の仮配置ボタン
 		mButton1 = (Button) findViewById(R.id.Button01);
+		mButton2 = (Button) findViewById(R.id.Button02);
+		mButton3 = (Button) findViewById(R.id.Button03);
 		tb1 = (ToggleButton) findViewById(R.id.toggleButton1);
 		tb1.setOnCheckedChangeListener(tb1_OnCheckedChangeListener);
 
 		// 初期位置を法政大学とする
 		moveToFirstRocation();
+
 
 		// 名前とユーザーIDが共に設定されていないならば、初期設定へ
 		if (name_result.equals("Unselected") && userid == "Unselected") {
@@ -155,17 +190,17 @@ public class MainActivity extends FragmentActivity {
 			before_list = (String) sharedpreferences.getString("list",
 					"Unselected");
 		}
-
-		CheckServer checkserver = new CheckServer(this);
-		checkserver.execute();
-		// ２秒待つ
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e1) {
-			// TODO 自動生成された catch ブロック
-			e1.printStackTrace();
-		}
-		if (!server) {
+		
+		/******************************サーバーの稼働状況を調べる*******************************/
+		request = new Http.Request();
+		request.url = "http://************/check_server.php";
+		
+		//requeatSyncは通信終了まで待機する同期通信用メソッド
+		//8秒でタイムアウトするように設定してあり、タイムアウトした場合は"404"という文字列が返ってくる
+		response = Http.requestSync(request, StringResponseHandler.getInstance());
+		
+		//タイムアウトした場合
+		if(((String) response.value).equals("404")){
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
 					this);
 			alertDialogBuilder.setMessage("現在サーバーが利用できません");
@@ -173,22 +208,49 @@ public class MainActivity extends FragmentActivity {
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 						}
-
 					});
 			alertDialogBuilder.create();
 			alertDialogBuilder.show();
 		}
+		
+		//タイムアウトしなかった場合
+		else if (response.code == 200) {
+			// 受信した文字列を取得
+			if(((String) response.value).equals("OK")){
+				server = true;
+			}
+		}
+		//以上の処理でサーバが稼働していればserver = true、稼働していなければserver = falseとなる
+		//sever = falseの場合、以降のあらゆるhttp通信処理が実行されないようになっている
+		/****************************************************************************************/
 
 		// 端末側の名前とデータベース側の名前の矛盾をチェックする
-		if (!flag1) {
-			CheckName check_name = new CheckName(name_result, userid, main);
-			check_name.execute();
-			// １秒待つ
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO 自動生成された catch ブロック
-				e1.printStackTrace();
+		if (!flag1 && server) {
+			request = new Http.Request();
+			request.url = "http://************/check_name.php";
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name", name_result));
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "id", userid));
+			//同期通信、タイムアウト8秒
+			response = Http.requestSync(request, StringResponseHandler.getInstance());
+			//タイムアウトした場合は警告を出す
+			if(((String) response.value).equals("404")){
+				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+						this);
+				alertDialogBuilder.setMessage("現在サーバーが利用できません");
+				alertDialogBuilder.setPositiveButton("OK",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+							}
+						});
+				alertDialogBuilder.create();
+				alertDialogBuilder.show();
+				server = false;
+			}
+			// HTTPステータスコードが200
+			else if (response.code == 200) {
+				// 受信した文字列を取得
+				abnormal_termination = (String) response.value;
+				
 			}
 
 			// 矛盾していた場合は修正する
@@ -205,6 +267,10 @@ public class MainActivity extends FragmentActivity {
 		UiSettings settings = map.getUiSettings();
 		settings.setZoomControlsEnabled(true);
 		map.setMyLocationEnabled(true);
+		
+		if(!server){
+			tb1.setClickable(false);
+		}
 	}
 
 	// メッセージを表示する
@@ -237,7 +303,7 @@ public class MainActivity extends FragmentActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
+		
 		/******************************* flag1がtrueならば初期設定を行う ******************************/
 		if (flag1) {
 			// 入力された名前が"Unselected"である場合、警告を出し再入力させる
@@ -255,7 +321,7 @@ public class MainActivity extends FragmentActivity {
 		/********************* flag1がfalseかつ名前が変更されていれば、名前変更処理へ ************************/
 		else if (!flag1
 				&& !((String) sharedpreferences.getString("name", "Unselected"))
-						.equals(name_result)) {
+						.equals(name_result) && server) {
 			change_name();
 		}
 		/*****************************************************************************************************/
@@ -263,13 +329,13 @@ public class MainActivity extends FragmentActivity {
 		/******************* flag1がfalseかつマーカーが変更されいれば、マーカー変更処理へ ********************/
 		else if (!flag1
 				&& !((String) sharedpreferences.getString("list", "Unselected"))
-						.equals(list_result)) {
+						.equals(list_result) && server) {
 			change_icon();
 		}
 		/*****************************************************************************************************/
 
 		/** flag2がtrueならばマーカーの配置処理へ **/
-		if (flag2) {
+		if (flag2 && server) {
 			putmarker();
 			flag2 = false;
 		}
@@ -291,22 +357,30 @@ public class MainActivity extends FragmentActivity {
 				icon_color();
 				// 現在時刻を取得する
 				calendar = Calendar.getInstance(tz);
-				df = new SimpleDateFormat("HH:mm", Locale.JAPANESE);
+				df = new SimpleDateFormat("HH:mm:ss", Locale.JAPANESE);
 				time = df.format(calendar.getTime());
+				
 
 				options1.icon(icon);
 				// マーカー配置
 
 				comment = (String) sharedpreferences
 						.getString("comment", "今ここ");
-
-				// 位置情報をデータベースに送信
-				InsertMyLocation post = new InsertMyLocation(mylat, mylon,
-						time, name_result, comment);
-				post.execute();
-
+				
+				if(server){
+					request = new Http.Request();
+					request.url = "http://************/insert_mysql.php";
+					request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lat",String.valueOf(mylat)));
+					request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lon", String.valueOf(mylon)));
+					request.params.add(new Http.Param(Http.Param.TYPE_STRING, "time", time));
+					request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name", name_result));
+					request.params.add(new Http.Param(Http.Param.TYPE_STRING, "comment", comment));
+					//非同期通信
+					Http.request(request, StringResponseHandler.getInstance());
+				}
+				
 				options1.title(comment + "at " + time + " by" + name_result);
-				map.addMarker(options1);
+				all_marker_list.add(map.addMarker(options1));
 
 			}
 		});
@@ -316,8 +390,7 @@ public class MainActivity extends FragmentActivity {
 		mButton1.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				// 現在地が取得できない場合は、何もしない
-				if (map.getMyLocation() == null)
-					;
+				if (map.getMyLocation() == null);
 				else {
 					// 現在地の緯度、経度を取得
 					double mylat = map.getMyLocation().getLatitude();
@@ -337,21 +410,30 @@ public class MainActivity extends FragmentActivity {
 
 					// 現在時刻を取得
 					calendar = Calendar.getInstance(tz);
-					df = new SimpleDateFormat("HH:mm", Locale.JAPANESE);
+					df = new SimpleDateFormat("HH:mm:ss", Locale.JAPANESE);
 					time = df.format(calendar.getTime());
-
+					
+					
 					icon_color();
 
 					options1.icon(icon);
-
-					// 位置情報をデータベースに送信
-					InsertMyLocation post = new InsertMyLocation(mylat, mylon,
-							time, name_result, "今ここ");
-					post.execute();
+					
+					if(server){
+						request = new Http.Request();
+						request.url = "http://************/insert_mysql.php";
+						request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lat",String.valueOf(mylat)));
+						request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lon", String.valueOf(mylon)));
+						request.params.add(new Http.Param(Http.Param.TYPE_STRING, "time", time));
+						request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name", name_result));
+						request.params.add(new Http.Param(Http.Param.TYPE_STRING, "comment", comment));
+						//非同期通信
+						Http.request(request, StringResponseHandler.getInstance());
+					}
 
 					// アイコンを配置
 					options1.title("今ここ！at " + time + " by" + name_result);
 					map.addMarker(options1);
+					all_marker_list.add(map.addMarker(options1));
 
 					// メッセージボックスを表示し、マーカーを配置したことを知らせる
 					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
@@ -370,57 +452,47 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
 		/*********************************************************************************************************/
-
-		/*************************************** 自動更新関連の処理 ********************************************/
-
-		/*
-		 * // 自動更新ONボタンが押された時の処理 mButton2.setOnClickListener(new
-		 * OnClickListener() { public void onClick(View v) { AlertDialog.Builder
-		 * alertDialogBuilder = new AlertDialog.Builder(main);
-		 * alertDialogBuilder.setMessage("自動更新を開始しますか?");
-		 * alertDialogBuilder.setPositiveButton("OK", new
-		 * DialogInterface.OnClickListener() {
-		 * 
-		 * @Override public void onClick(DialogInterface dialog, int which) { //
-		 * 自動更新ONボタンをクリック禁止に mButton2.setEnabled(false);
-		 * 
-		 * // 自動更新OFFボタンをクリック可能に mButton3.setEnabled(true);
-		 * 
-		 * // バックグラウンドでも動作を可能とするためにServiceを呼び出す startService(new
-		 * Intent(MainActivity.this, AutoGetLocation.class)); } });
-		 * alertDialogBuilder.setNegativeButton("NO",new
-		 * DialogInterface.OnClickListener(){
-		 * 
-		 * @Override public void onClick(DialogInterface dialog, int which) {
-		 * 
-		 * } }); alertDialogBuilder.create(); alertDialogBuilder.show(); } });
-		 * 
-		 * // 自動更新OFFボタンが押された時の処理 mButton3.setOnClickListener(new
-		 * OnClickListener() { public void onClick(View v) { AlertDialog.Builder
-		 * alertDialogBuilder = new AlertDialog.Builder(main);
-		 * alertDialogBuilder.setMessage("自動更新を終了しますか?");
-		 * alertDialogBuilder.setNegativeButton("NO",new
-		 * DialogInterface.OnClickListener(){
-		 * 
-		 * @Override public void onClick(DialogInterface dialog, int which) {
-		 * 
-		 * } }); alertDialogBuilder.setPositiveButton("OK", new
-		 * DialogInterface.OnClickListener() {
-		 * 
-		 * @Override public void onClick(DialogInterface dialog, int which) { //
-		 * 自動更新ONボタンをクリック可能に mButton2.setEnabled(true);
-		 * 
-		 * // 自動更新OFFボタンをクック禁止に mButton3.setEnabled(false);
-		 * 
-		 * // Serviceを停止する. stopService(new Intent(MainActivity.this,
-		 * AutoGetLocation.class)); } }); alertDialogBuilder.create();
-		 * alertDialogBuilder.show(); } });
-		 * /************************************
-		 * *************************************************************
-		 */
+		
+		
+		/********************************マーカーの全削除(仮)*****************************/
+		mButton2.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if(all_marker_list.size() > 0){
+					for(int i = 0; i < all_marker_list.size(); ++i){
+						all_marker_list.get(i).remove();
+					}
+					all_marker_list.clear();
+				}
+			}
+		});
+		/*********************************************************************************/
+		
+		
+		/********************************ユーザ一覧表示(仮)********************************/
+		mButton3.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if(server){
+					Intent intent = new Intent(getApplication(), MemberList.class);
+					startActivity(intent);
+				}
+			}
+		});
+		/**********************************************************************************/
+		
+		
+		/****サーバが稼働していない場合、名前とアイコンの変更処理を無効化する****/
+		if(!server){
+			name_result = before_name;
+			list_result = before_list;
+			Editor editor = sharedpreferences.edit();
+			editor.putString("name", name_result);
+			editor.putString("list", list_result);
+			editor.commit();
+		}
+		/************************************************************************/
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/*************************************** 自動更新関連の処理 *****************************************************************/
 	private CompoundButton.OnCheckedChangeListener tb1_OnCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
@@ -436,8 +508,7 @@ public class MainActivity extends FragmentActivity {
 
 		}
 	};
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/****************************************************************************************************************************/
 
 	@Override
 	protected void onDestroy() {
@@ -457,8 +528,8 @@ public class MainActivity extends FragmentActivity {
 			}
 		}
 	}
-
 	/***********************************************************************************/
+	
 
 	/***************************************** 初期位置を設定するメソッド ***********************************/
 	protected void moveToFirstRocation() {
@@ -475,58 +546,65 @@ public class MainActivity extends FragmentActivity {
 		options2.title("法政大学");
 		map.addMarker(options2);
 	}
-
 	/*********************************************************************************************************/
 
-	/******************** データベースから位置情報を取得しマーカーを配置するメソッド *******************************/
+	
+	/**************************************** データベースから位置情報を取得しマーカーを配置するメソッド *****************************************/
 	public void putmarker() {
-		/************* データベースから位置情報を取得 ******************/
-		GetAllLocation post = new GetAllLocation(this);
-		post.execute();
-
-		// １秒待つ
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			// TODO 自動生成された catch ブロック
-			e1.printStackTrace();
+		
+		
+		/******************* データベースから位置情報を取得 ********************/
+		request = new Http.Request();
+		request.url = "http://************/get_mysql.php";
+		//同期通信　タイムアウト8秒
+		response = Http.requestSync(request, JSONResponseHandler.getInstance());
+		//タイムアウトした場合はトーストで知らせる
+		if(((String) response.value).equals("404")){
+			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+			return;
 		}
-
+		
+		json = (String) response.value;
+		
+		//一旦すべてのマーカーを削除する
+		if(all_marker_list.size() > 0){
+			for(int i = 0; i < all_marker_list.size(); ++i){
+				all_marker_list.get(i).remove();
+			}
+			all_marker_list.clear();
+		}
 		// データベースから受け取ったJSON形式のデータを分解し、配列に格納する
 		try {
 			JSONArray jsonArray = new JSONArray(json);
-			database_name = new String[jsonArray.length()];
-			database_latitude = new double[jsonArray.length()];
-			database_longitude = new double[jsonArray.length()];
-			database_time = new String[jsonArray.length()];
-			database_comment = new String[jsonArray.length()];
-			database_id = new int[jsonArray.length()];
+			
 			database_number = jsonArray.length();
 
 			for (int i = 0; i < database_number; i++) {
 
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-				database_name[i] = jsonObject.getString("name");
-				database_latitude[i] = jsonObject.getDouble("latitude");
-				database_longitude[i] = jsonObject.getDouble("longitude");
-				database_time[i] = jsonObject.getString("time");
-				database_id[i] = jsonObject.getInt("icon_id");
-				database_comment[i] = jsonObject.getString("comment");
+				database_name.add(jsonObject.getString("name"));
+				database_latitude.add(jsonObject.getDouble("latitude"));
+				database_longitude.add(jsonObject.getDouble("longitude"));
+				database_time.add(jsonObject.getString("time"));
+				database_id.add(jsonObject.getInt("icon_id"));
+				database_comment.add(jsonObject.getString("comment"));
 			}
+			jsonArray = null;
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		/**************************************************************/
+		/************************************************************************/
 
-		/************ 取得した位置情報をもとにマーカーを配置 ***************************************************/
+		/*************************** 取得した位置情報をもとにマーカーを配置 ***************************************************/
 		for (int i = 0; i < database_number; ++i) {
 			// 緯度、経度を読み込み、マーカーを打つ位置を設定する
-			LatLng position = new LatLng(database_latitude[i],
-					database_longitude[i]);
+			LatLng position = new LatLng(database_latitude.get(i),
+					database_longitude.get(i));
 			options1.position(position);
-
-			switch (database_id[i]) {
+			
+			//使用するマーカーの画像を設定
+			switch (database_id.get(i)) {
 			case 0:
 				icon = BitmapDescriptorFactory.fromResource(R.drawable.totoro);
 				break;
@@ -538,21 +616,89 @@ public class MainActivity extends FragmentActivity {
 				icon = BitmapDescriptorFactory
 						.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
 				break;
-			case 3:
-				icon = BitmapDescriptorFactory
-						.fromResource(R.drawable.footprint);
-				break;
 			}
 			options1.icon(icon);
 			// マーカーを打つ
-			options1.title(database_comment[i] + "at " + database_time[i]
-					+ " by" + database_name[i]);
-			map.addMarker(options1);
+			options1.title(database_comment.get(i) + "at " + database_time.get(i)
+					+ " by" + database_name.get(i));
+			all_marker_list.add(map.addMarker(options1));
+			
+			if( i != 0){
+				//ひとつ前のマーカーと現在のマーカーとでユーザが異なる場合、ひとつ前のマーカーに重ねるように現在地強調表示用のマーカーを配置する
+				if(!(database_name.get(i-1).equals(database_name.get(i))) && !(database_name.get(i-1).equals(name_result))){
+					LatLng position2 = new LatLng(database_latitude.get(i-1),database_longitude.get(i-1));
+					options4.title("今ここ!" + "at" + database_time.get(i-1) + "by" + database_name.get(i-1));
+					options4.position(position2);
+					all_marker_list.add(map.addMarker(options4));
+				}
+				//配置したマーカーが最後であり、かつ自分のマーカーでない場合、配置したマーカーに重ねるように現在地強調表示用のマーカーを配置する
+				else if(i == (database_number - 1) && !(database_name.get(i-1).equals(name_result))){
+					LatLng position2 = new LatLng(database_latitude.get(i),database_longitude.get(i));
+					options4.title("今ここ!" + "at" + database_time.get(i) + "by" + database_name.get(i));
+					options4.position(position2);
+					all_marker_list.add(map.addMarker(options4));
+				}
+			}
+			
+			if(i != 0 && i < database_number){
+				if(database_name.get(i).equals(database_name.get(i-1))){
+					//2点間の距離を格納する変数
+					double distance;
+					//配置する足跡の数を格納する変数
+					int footprint_number;
+					//2点間の距離を求める
+					distance = distance(database_latitude.get(i-1),database_latitude.get(i),database_longitude.get(i-1),
+							database_longitude.get(i)) * 1000;	
+					//配置する足跡の数を求める
+					int footprint_interval = Integer.parseInt((String) sharedpreferences
+							.getString("interval", "500").trim());
+					footprint_number = (int) (distance / footprint_interval);
+					
+					double footprint_latitude;
+					double footprint_longitude ;
+					double footprint_X,footprint_Y,deg,angle;
+					float footprint_angle;
+					for(int j = 0;j < footprint_number - 1;j++){
+						//足跡を配置する位置を求める
+						footprint_latitude = database_latitude.get(i-1) + (database_latitude.get(i) 
+								- database_latitude.get(i-1)) * (j + 1)/footprint_number;
+						footprint_longitude = database_longitude.get(i-1) + (database_longitude.get(i) 
+								- database_longitude.get(i-1)) * (j + 1)/footprint_number;
+						LatLng foot_temp = new LatLng(footprint_latitude,footprint_longitude);
+						
+						//足跡の向きを求める
+						footprint_X = cos(database_latitude.get(i-1)) * sin(database_latitude.get(i)) - sin(database_latitude.get(i-1)) 
+								* cos(database_latitude.get(i)) * cos(database_longitude.get(i) - database_longitude.get(i-1));
+						footprint_Y = sin(database_longitude.get(i) - database_longitude.get(i-1)) * cos(database_latitude.get(i));
+						deg = toDegrees(atan2(footprint_Y, footprint_X));
+						angle =(deg + 360) % 360;
+						footprint_angle = (float)(abs(angle) + (1 / 7200));
+						
+						//足跡を配置する
+						options3.position(foot_temp);
+						if(footprint_angle < 0){
+							footprint_angle = -footprint_angle;
+						}
+						else{
+							footprint_angle = 360 - footprint_angle;
+						}
+						options3.rotation(footprint_angle);
+						all_marker_list.add(map.addMarker(options3));
+					}
+				}
+			}
 		}
-		/*****************************************************************************************************/
+		/**********************************************************************************************************************/
+		//配列のクリア
+		database_name.clear();
+		database_latitude.clear();
+		database_longitude.clear();
+		database_time.clear();
+		database_id.clear();
+		database_comment.clear();
 	}
 
-	/*************************************************************************************************************/
+	/*********************************************************************************************************************************************/
 
 	/****************************** 使用するマーカーを設定する ************************************/
 	public void icon_color() {
@@ -569,10 +715,7 @@ public class MainActivity extends FragmentActivity {
 			icon = BitmapDescriptorFactory
 					.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
 			icon_id = 2;
-		} else if (list_result.equals("footprint")) {
-			icon = BitmapDescriptorFactory.fromResource(R.drawable.footprint);
-			icon_id = 3;
-		}
+		} 
 	}
 
 	/*********************************************************************************************/
@@ -601,17 +744,26 @@ public class MainActivity extends FragmentActivity {
 				.getString("list", "Unselected");
 		icon_color();
 
-		// 重複チェック
-		CheckDuplication check_duplication = new CheckDuplication(name_result,
-				this);
-		check_duplication.execute();
-
-		// １秒待つ
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			// TODO 自動生成された catch ブロック
-			e1.printStackTrace();
+		request = new Http.Request();
+		request.url = "http://************/check_duplication.php";
+		//同期通信　タイムアウト8秒
+		response = Http.requestSync(request, StringResponseHandler.getInstance());
+		
+		//通信に成功した場合
+		if(((String) response.value).equals("duplication")){
+			main.check = (String) response.value;
+		}
+		//タイムアウトした場合、ロールバックする
+		else if(((String) response.value).equals("404")){
+			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+			name_result = before_name;
+			list_result = before_list;
+			Editor editor = sharedpreferences.edit();
+			editor.putString("name", name_result);
+			editor.commit();
+			editor.putString("list", list_result);
+			editor.commit();
+			return;
 		}
 
 		// 重複していた場合は、警告をだし、再入力させる
@@ -630,10 +782,26 @@ public class MainActivity extends FragmentActivity {
 		}
 		// 重複していなかった場合、データベースに名前とマーカー情報を登録する
 		else {
-			SetMyNameAndIconID set_iconID_and_name = new SetMyNameAndIconID(
-					icon_id, name_result, this);
-			set_iconID_and_name.execute();
-
+			request = new Http.Request();
+			request.url = "http://************/set_iconID_and_name.php";
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",name_result));
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "ICON_ID", String.valueOf(icon_id)));
+			//同期通信 タイムアウト8秒
+			response = Http.requestSync(request, StringResponseHandler.getInstance());
+			
+			//タイムアウトした場合、ロールバックする
+			if(((String) response.value).equals("404")){
+				Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+				name_result = before_name;
+				list_result = before_list;
+				Editor editor = sharedpreferences.edit();
+				editor.putString("name", name_result);
+				editor.commit();
+				editor.putString("list", list_result);
+				editor.commit();
+				return;
+			}
+			
 			// メッセージボックスを表示し、登録が完了したことを知らせる
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
 					this);
@@ -649,17 +817,25 @@ public class MainActivity extends FragmentActivity {
 			before_name = name_result;
 			before_list = list_result;
 			flag1 = false; // 初期設定が終了したため、flag1をfalseにする
-
-			// データベースによって自動的に割り当てられたユーザーIDを取得し、記録する
-			GetMyId get_my_id = new GetMyId(this, name_result);
-			get_my_id.execute();
-			// １秒待つ
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO 自動生成された catch ブロック
-				e1.printStackTrace();
+			
+			//データベースから割り振られるユーザIDを受信する
+			request = new Http.Request();
+			request.url = "http://************/get_my_id.php";
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",name_result));
+			//同期通信 タイムアウト8秒
+			response = Http.requestSync(request, StringResponseHandler.getInstance());
+			
+			//タイムアウトした場合、警告を出す。
+			//このタイミングでタイムアウトが発生した場合、現在対処は不可能。
+			//アプリのデータを削除する必要がある。
+			//前提条件として、この処理を行う前に２回通信に成功していることが必要であるため、
+			//ここでのみタイムアウトする可能性は低い。
+			if(((String) response.value).equals("404")){
+				Toast.makeText(this, "致命的なエラー", Toast.LENGTH_SHORT).show();
+				return;
 			}
+			userid = (String) response.value;
+			
 			Editor editor = sharedpreferences.edit();
 			editor.putString("userid", userid);
 			editor.commit();
@@ -694,16 +870,24 @@ public class MainActivity extends FragmentActivity {
 			icon_color();
 
 			// 重複チェック
-			CheckDuplication check_duplication = new CheckDuplication(
-					name_result, this);
-			check_duplication.execute();
-
-			// １秒待つ
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				// TODO 自動生成された catch ブロック
-				e1.printStackTrace();
+			request = new Http.Request();
+			request.url = "http://************/check_duplication.php";
+			//同期通信　タイムアウト8秒
+			response = Http.requestSync(request, StringResponseHandler.getInstance());
+			//タイムアウトした場合、ロールバックする
+			if(((String) response.value).equals("404")){
+				Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+				name_result = before_name;
+				list_result = before_list;
+				Editor editor = sharedpreferences.edit();
+				editor.putString("name", name_result);
+				editor.commit();
+				editor.putString("list", list_result);
+				editor.commit();
+				return;
+			}
+			else if(((String) response.value).equals("duplication")){
+				main.check = (String) response.value;
 			}
 
 			// 重複していた場合は、警告をだし、再入力させる
@@ -724,9 +908,26 @@ public class MainActivity extends FragmentActivity {
 
 			// 重複していなかった場合は、データベースを更新する
 			else {
-				ChangeName change_name = new ChangeName(name_result,
-						before_name, icon_id);
-				change_name.execute();
+				request = new Http.Request();
+				request.url = "http://************/change_name.php";
+				request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name_result",name_result));
+				request.params.add(new Http.Param(Http.Param.TYPE_STRING, "before_name", before_name));
+				request.params.add(new Http.Param(Http.Param.TYPE_STRING, "icon_id", String.valueOf(icon_id)));
+				//同期通信　タイムアウト8秒
+				Http.requestSync(request, StringResponseHandler.getInstance());
+				//タイムアウトした場合、ロールバックする
+				if(((String) response.value).equals("404")){
+					Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+					name_result = before_name;
+					list_result = before_list;
+					Editor editor = sharedpreferences.edit();
+					editor.putString("name", name_result);
+					editor.commit();
+					editor.putString("list", list_result);
+					editor.commit();
+					return;
+				}
+				
 				before_name = name_result;
 				before_list = list_result;
 
@@ -756,9 +957,24 @@ public class MainActivity extends FragmentActivity {
 		list_result = (String) sharedpreferences
 				.getString("list", "Unselected");
 		icon_color();
-		ChangeIcon change_icon = new ChangeIcon(icon_id, name_result);
-		change_icon.execute();
 
+		request = new Http.Request();
+		request.url = "http://************/change_icon_id.php";
+		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",name_result));
+		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "icon_id", String.valueOf(icon_id)));
+		//同期通信　タイムアウト8秒
+		Http.requestSync(request, StringResponseHandler.getInstance());
+		//タイムアウトした場合、ロールバックする
+		if(((String) response.value).equals("404")){
+			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+			list_result = before_list;
+			Editor editor = sharedpreferences.edit();
+			editor.putString("list", list_result);
+			editor.commit();
+			return;
+		}
+		
+		before_list = list_result;
 		// メッセージボックスを表示し、変更が完了したことを知らせる
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 		alertDialogBuilder.setMessage("変更完了です");
@@ -772,4 +988,20 @@ public class MainActivity extends FragmentActivity {
 		alertDialogBuilder.show();
 	}
 	/**********************************************************************************/
+	
+	public double distance(double lat1,double lat2,double lon1,double lon2){
+		double r = 6378.137; // 赤道半径[km]
+		 
+		
+		lat1 = lat1 * PI / 180;
+		lon1 = lon1 * PI / 180;
+ 
+		
+		lat2 = lat2 * PI / 180;
+		lon2 = lon2 * PI / 180;
+ 
+		// 2点間の距離[km]
+		double distance = r * acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon2 - lon1));
+		return distance;
+	}				
 }

@@ -19,6 +19,9 @@
 	<string name="comment_title">Comment</string>
 	<string name="comment_summary">----</string>
 	<string name="comment_dialogtitle">commentpreference</string>
+	<string name="interval_title">足跡の間隔(m)</string>
+	<string name="interval_summary">----</string>
+	<string name="interval_dialogtitle">intervalpreference</string>
 </resources>
 
 

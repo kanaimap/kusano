@@ -21,6 +21,14 @@
             android:title="@string/comment_title"
             android:summary="@string/comment_summary"
             android:dialogTitle="@string/comment_dialogtitle" />
+        
+        <EditTextPreference
+            android:key="interval"
+            android:title="@string/interval_title"
+            android:summary="@string/interval_summary"
+            android:dialogTitle="@string/interval_dialogtitle"
+            android:inputType="number"
+             />
      
          
         <Preference 
