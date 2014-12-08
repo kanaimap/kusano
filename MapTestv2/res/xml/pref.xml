@@ -28,13 +28,17 @@
             android:summary="@string/interval_summary"
             android:dialogTitle="@string/interval_dialogtitle"
             android:inputType="number"
-             />
-     
+             />   
          
         <Preference 
-            android:title="マーカー配置"
-            android:key="button"
-            android:summary="マーカー配置"/>
+            android:title="マーカー削除"
+            android:key="button1"
+            android:summary="マーカー削除"/>
+        
+        <Preference 
+            android:title="ユーザ一覧"
+            android:key="button2"
+            android:summary="ユーザ一覧"/>
 
         
     </PreferenceCategory>

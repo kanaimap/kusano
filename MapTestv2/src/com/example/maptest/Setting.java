@@ -58,9 +58,9 @@ public class Setting extends PreferenceActivity
 		setSummary(name, param_name);
 		setSummary(comment,param_comment);
 		setSummary(interval,param_interval);
-		//マーカー配置ボタン
-		Preference button = (Preference)findPreference("button");
-		button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+		//マーカー削除ボタン
+		Preference button1 = (Preference)findPreference("button1");
+		button1.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(Preference arg0) { 
 				Intent intent_ret = new Intent();
@@ -70,6 +70,18 @@ public class Setting extends PreferenceActivity
 				return true;
 			}
 		});	
+		//ユーザ一覧ボタン
+		Preference button2 = (Preference)findPreference("button2");
+		button2.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference arg0) { 
+				Intent intent_ret = new Intent();
+				intent_ret.putExtra("ReturnDate","marker_set");
+				setResult(101,intent_ret);
+				finish();
+				return true;
+			}
+		});
 	}
 	
 	 public boolean onPreferenceChange(android.preference.Preference preference,	
