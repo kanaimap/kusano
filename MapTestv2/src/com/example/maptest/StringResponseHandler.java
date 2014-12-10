@@ -14,7 +14,7 @@ public abstract class StringResponseHandler extends Http.ResponseHandlerBase {
 	@Override
 	public Object createObjectFromResponse(HttpResponse response) {
 		try {
-			return EntityUtils.toString(response.getEntity(), "UTF-8");
+			return EntityUtils.toString(response.getEntity(), "UTF-8").trim();
 		} catch (ParseException e) {
 		} catch (IOException e) {
 		}

@@ -26,11 +26,11 @@ public class MemberList extends Activity {
 	  lv = (ListView) findViewById(R.id.memberlist);
 
 	  request = new Http.Request();
-	  request.url = "http://10.29.31.119/get_all_name.php";
+	  request.url = "http://10.110.131.97/get_all_name.php";
 	  //同期通信　タイムアウト8秒
 	  response = Http.requestSync(request, JSONResponseHandler.getInstance());
 	  //タイムアウトした場合、警告をだし、MainActivityへ戻る
-	  if(((String) response.value).equals("404")){
+	  if((((String) response.value).trim()).equals("404")){
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			MemberList.this.finish();
 		}

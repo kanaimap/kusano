@@ -1,7 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -18,75 +19,74 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:background="@android:color/transparent" />
-    </RelativeLayout>
 
-    <SlidingDrawer
-        android:id="@+id/slidingDrawer1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:content="@+id/content"
-        android:handle="@+id/handle"
-        android:orientation="vertical"
-        android:topOffset="350dp" >
+        <com.example.maptest.WrappingSlidingDrawer
+            android:id="@+id/slidingDrawer1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:content="@+id/content"
+            android:handle="@+id/handle"
+            android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/handle"
-            android:layout_width="88dip"
-            android:layout_height="44dip"
-            android:background="@drawable/handle" />
+            <Button
+                android:id="@+id/handle"
+                android:layout_width="88dip"
+                android:layout_height="44dip"
+                android:background="@drawable/handle" />
 
-        <HorizontalScrollView
-            android:id="@+id/content"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" >
-
-            <LinearLayout
-                android:id="@id/content"
+            <HorizontalScrollView
+                android:id="@+id/content"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="#d3d3d3"
-                android:orientation="horizontal" >
+                android:layout_height="wrap_content" >
 
-                <Button
-                    android:id="@+id/NowB"
+                <LinearLayout
+                    android:id="@id/content"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/custom_now" />
+                    android:layout_height="match_parent"
+                    android:background="#deb887"
+                    android:orientation="horizontal" >
 
-                <ToggleButton
-                    android:id="@+id/Clear2B"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/custom_clear2b"
-                    android:checked="true" >
-                </ToggleButton>
+                    <Button
+                        android:id="@+id/NowB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_now" />
 
-                <Button
-                    android:id="@+id/DoukiB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/custom_douki" />
+                    <ToggleButton
+                        android:id="@+id/Clear2B"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_clear2b"
+                        android:checked="true" />
 
-                <ToggleButton
-                    android:id="@+id/AutoB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/custom_togglebutton"
-                    android:checked="false" >
-                </ToggleButton>
+                    <Button
+                        android:id="@+id/DoukiB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_douki" />
 
-                <Button
-                    android:id="@+id/SettingB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/custom_setting" />
-                
-                <Button
-                    android:id="@+id/User"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </HorizontalScrollView>
-    </SlidingDrawer>
+                    <ToggleButton
+                        android:id="@+id/AutoB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_togglebutton"
+                        android:checked="false" />
+
+                    <Button
+                        android:id="@+id/SettingB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_setting" />
+
+                    <Button
+                        android:id="@+id/User"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </HorizontalScrollView>
+        </com.example.maptest.WrappingSlidingDrawer>
+    </RelativeLayout>
 
 </RelativeLayout>

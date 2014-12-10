@@ -1,6 +1,5 @@
 package com.example.maptest;
 
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
@@ -11,7 +10,6 @@ import java.util.List;
 import org.apache.http.Consts;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
@@ -48,7 +46,7 @@ public class Http {
 		public Integer code = null;
 		// レスポンス内容
 		public Object value = null;
-		
+
 		// リクエスト時の保持オブジェクト
 		public Object keepObject = null;
 	}
@@ -95,7 +93,8 @@ public class Http {
 
 			// URI構築
 			URI uri = null;
-			ContentType textContentType = ContentType.create("text/plain",Consts.UTF_8);
+			ContentType textContentType = ContentType.create("text/plain",
+					Consts.UTF_8);
 			try {
 				uri = new URI(url);
 			} catch (URISyntaxException e) {
@@ -105,22 +104,18 @@ public class Http {
 
 			// GET/POSTリクエスト作成
 			HttpUriRequest request;
-			if (this.params != null && this.params.size() > 0) {
-				HttpPost r = new HttpPost(uri);
-				MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-				for (Param p : this.params) {
-					switch (p.type) {
-					case Param.TYPE_STRING:
-						entity.addTextBody(p.key,p.value,textContentType);
-						break;
-					}
+
+			HttpPost r = new HttpPost(uri);
+			MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+			for (Param p : this.params) {
+				switch (p.type) {
+				case Param.TYPE_STRING:
+					entity.addTextBody(p.key, p.value.trim(), textContentType);
+					break;
 				}
-				r.setEntity(entity.build());
-				request = r;
-			} else {
-				HttpGet r = new HttpGet(uri);
-				request = r;
 			}
+			r.setEntity(entity.build());
+			request = r;
 
 			// リクエストを実行
 			DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -241,12 +236,12 @@ public class Http {
 
 		// リクエスト実行
 		httpReq.execute();
-		
+
 		int i = 0;
 		// レスポンスが返るまで待機
 		while (true) {
 			try {
-				if(i > 0){
+				if (i > 0) {
 					resp.value = "404";
 					return resp;
 				}
@@ -261,7 +256,7 @@ public class Http {
 		// レスポンスを返す
 		return resp;
 	}
-	
+
 	/**
 	 * 非同期リクエスト
 	 */
@@ -284,4 +279,3 @@ public class Http {
 	}
 
 }
-

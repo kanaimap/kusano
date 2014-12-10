@@ -70,18 +70,6 @@ public class Setting extends PreferenceActivity
 				return true;
 			}
 		});	
-		//ユーザ一覧ボタン
-		Preference button2 = (Preference)findPreference("button2");
-		button2.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			@Override
-			public boolean onPreferenceClick(Preference arg0) { 
-				Intent intent_ret = new Intent();
-				intent_ret.putExtra("ReturnDate","marker_set");
-				setResult(101,intent_ret);
-				finish();
-				return true;
-			}
-		});
 	}
 	
 	 public boolean onPreferenceChange(android.preference.Preference preference,	
