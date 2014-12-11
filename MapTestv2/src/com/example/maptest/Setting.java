@@ -50,7 +50,7 @@ public class Setting extends PreferenceActivity
 		// 値の取得
 		String param_list = p.getString("list", "Unselected");
 		String param_name = p.getString("name", "Unselected");
-		String param_comment = p.getString("comment","今ここ");
+		String param_comment = p.getString("comment","ここ!");
 		String param_interval = p.getString("interval","500");
 		
 		// サマリーの設定

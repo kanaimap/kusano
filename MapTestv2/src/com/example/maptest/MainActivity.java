@@ -114,12 +114,10 @@ public class MainActivity extends FragmentActivity {
 
 	// 初期設定が必要であるかを判断するフラグ
 	boolean flag1 = false;
-	// 設定画面において、マーカー配置が押された場合にtureとなるフラグ
+	// 設定画面において、マーカー削除ボタンが押された場合にtureとなるフラグ
 	boolean flag2 = false;
 	// サーバーが稼働しているか否かを格納するフラグ
 	boolean server = false;
-	// 設定画面において、マーカー削除ボタンが押された場合にtureとなるフラグ
-	boolean flag3 = false;
 
 	static final int SUB_ACTIVITY = 1001;
 
@@ -199,7 +197,7 @@ public class MainActivity extends FragmentActivity {
 
 		/****************************** サーバーの稼働状況を調べる *******************************/
 		request = new Http.Request();
-		request.url = "http://10.110.131.97/check_server.php";
+		request.url = "http://10.110.129.177/check_server.php";
 
 		// requestSyncは通信終了まで待機する同期通信用メソッド
 		// 8秒でタイムアウトするように設定してあり、タイムアウトした場合は"404"という文字列が返ってくる
@@ -234,7 +232,7 @@ public class MainActivity extends FragmentActivity {
 		/************** 端末側の名前とデータベース側の名前の矛盾をチェックする ****************/
 		if (!flag1 && server) {
 			request = new Http.Request();
-			request.url = "http://10.110.131.97/check_name.php";
+			request.url = "http://10.110.129.177/check_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "id",
@@ -397,11 +395,11 @@ public class MainActivity extends FragmentActivity {
 					options1.icon(icon);
 
 					comment = (String) sharedpreferences.getString("comment",
-							"今ここ");
+							"ここ!");
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.110.131.97/insert_mysql.php";
+						request.url = "http://10.110.129.177/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -482,7 +480,7 @@ public class MainActivity extends FragmentActivity {
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.110.131.97/insert_mysql.php";
+						request.url = "http://10.110.129.177/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -533,15 +531,17 @@ public class MainActivity extends FragmentActivity {
 		});
 		/************************************************************************************************************/
 
+		/************* Userボタンが押されたときの処理 **************/
 		User.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if (server) {
-					Intent intent = new Intent(getApplication(),
+					Intent intent = new Intent(getApplication(),	//メンバ一覧表示
 							MemberList.class);
 					startActivity(intent);
 				}
 			}
 		});
+		/***********************************************************/
 	}
 
 	/************************************ Clearボタンが押された時の処理 ************************************************************/
@@ -594,11 +594,6 @@ public class MainActivity extends FragmentActivity {
 			{
 				if (resultCode == 100) {
 					flag2 = true;
-				} else if (resultCode == 101) {
-					if (server) {
-						flag3 = true;
-					}
-
 				}
 			}
 		}
@@ -629,7 +624,7 @@ public class MainActivity extends FragmentActivity {
 
 		/******************* データベースから位置情報を取得 ********************/
 		request = new Http.Request();
-		request.url = "http://10.110.131.97/get_mysql.php";
+		request.url = "http://10.110.129.177/get_mysql.php";
 		// 同期通信　タイムアウト8秒
 		response = Http.requestSync(request, JSONResponseHandler.getInstance());
 		// タイムアウトした場合はトーストで知らせる
@@ -842,7 +837,7 @@ public class MainActivity extends FragmentActivity {
 		icon_color();
 
 		request = new Http.Request();
-		request.url = "http://10.110.131.97/check_duplication.php";
+		request.url = "http://10.110.129.177/check_duplication.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		// 同期通信　タイムアウト8秒
@@ -883,7 +878,7 @@ public class MainActivity extends FragmentActivity {
 		// 重複していなかった場合、データベースに名前とマーカー情報を登録する
 		else {
 			request = new Http.Request();
-			request.url = "http://10.110.131.97/set_iconID_and_name.php";
+			request.url = "http://10.110.129.177/set_iconID_and_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING,
@@ -923,7 +918,7 @@ public class MainActivity extends FragmentActivity {
 
 			// データベースから割り振られるユーザIDを受信する
 			request = new Http.Request();
-			request.url = "http://10.110.131.97/get_my_id.php";
+			request.url = "http://10.110.129.177/get_my_id.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信 タイムアウト8秒
@@ -975,7 +970,7 @@ public class MainActivity extends FragmentActivity {
 
 			// 重複チェック
 			request = new Http.Request();
-			request.url = "http://10.110.131.97/check_duplication.php";
+			request.url = "http://10.110.129.177/check_duplication.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信　タイムアウト8秒
@@ -1015,7 +1010,7 @@ public class MainActivity extends FragmentActivity {
 			// 重複していなかった場合は、データベースを更新する
 			else {
 				request = new Http.Request();
-				request.url = "http://10.110.131.97/change_name.php";
+				request.url = "http://10.110.129.177/change_name.php";
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 						"name_result", name_result));
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
@@ -1068,7 +1063,7 @@ public class MainActivity extends FragmentActivity {
 		icon_color();
 
 		request = new Http.Request();
-		request.url = "http://10.110.131.97/change_icon_id.php";
+		request.url = "http://10.110.129.177/change_icon_id.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "ICON_ID",
