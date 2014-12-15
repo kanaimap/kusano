@@ -75,6 +75,7 @@ public class MainActivity extends FragmentActivity {
 	MainActivity main = this;
 
 	BitmapDescriptor icon;
+	BitmapDescriptor footprint;
 
 	// 使用アイコン
 	int icon_id;
@@ -98,6 +99,8 @@ public class MainActivity extends FragmentActivity {
 	String before_list;
 	// マーカーに付与するコメントを保管する変数
 	String comment;
+	
+	String footprint_result;
 
 	// 名前の重複チェック用変数
 	String check = "";
@@ -153,6 +156,9 @@ public class MainActivity extends FragmentActivity {
 		before_name = (String) sharedpreferences
 				.getString("name", "Unselected");
 		userid = (String) sharedpreferences.getString("userid", "Unselected");
+		footprint_result = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
+		
 		icon_color();
 		options1.icon(icon);
 
@@ -162,13 +168,10 @@ public class MainActivity extends FragmentActivity {
 				.findFragmentById(R.id.map)).getMap();
 		MapsInitializer.initialize(this);
 
-		// 足跡配置用optionsの設定
-		options3.icon(BitmapDescriptorFactory
-				.fromResource(R.drawable.footprint));
 
 		// 現在地強調表示用のoptionの設定
 		options4.icon(BitmapDescriptorFactory
-				.fromResource(R.drawable.now_marker));
+				.fromResource(R.drawable.now_nomal));
 
 		// ボタン割り当て
 		NowB = (Button) findViewById(R.id.NowB);
@@ -188,6 +191,7 @@ public class MainActivity extends FragmentActivity {
 			flag1 = true;
 			Editor editor = sharedpreferences.edit();
 			editor.putString("list", "totoro");
+			editor.putString("ashiato","a_hito");
 			editor.commit();
 			list_result = (String) sharedpreferences.getString("list",
 					"Unselected");
@@ -197,7 +201,7 @@ public class MainActivity extends FragmentActivity {
 
 		/****************************** サーバーの稼働状況を調べる *******************************/
 		request = new Http.Request();
-		request.url = "http://10.110.129.177/check_server.php";
+		request.url = "http://10.29.31.119/check_server.php";
 
 		// requestSyncは通信終了まで待機する同期通信用メソッド
 		// 8秒でタイムアウトするように設定してあり、タイムアウトした場合は"404"という文字列が返ってくる
@@ -232,7 +236,7 @@ public class MainActivity extends FragmentActivity {
 		/************** 端末側の名前とデータベース側の名前の矛盾をチェックする ****************/
 		if (!flag1 && server) {
 			request = new Http.Request();
-			request.url = "http://10.110.129.177/check_name.php";
+			request.url = "http://10.29.31.119/check_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "id",
@@ -399,7 +403,7 @@ public class MainActivity extends FragmentActivity {
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.110.129.177/insert_mysql.php";
+						request.url = "http://10.29.31.119/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -480,7 +484,7 @@ public class MainActivity extends FragmentActivity {
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.110.129.177/insert_mysql.php";
+						request.url = "http://10.29.31.119/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -526,7 +530,9 @@ public class MainActivity extends FragmentActivity {
 		/*********************************** Doukiボタンが押された時の処理 ******************************************/
 		DoukiB.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				putmarker();
+				if (server) {
+					putmarker();
+				}
 			}
 		});
 		/************************************************************************************************************/
@@ -535,7 +541,7 @@ public class MainActivity extends FragmentActivity {
 		User.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if (server) {
-					Intent intent = new Intent(getApplication(),	//メンバ一覧表示
+					Intent intent = new Intent(getApplication(), // メンバ一覧表示
 							MemberList.class);
 					startActivity(intent);
 				}
@@ -624,7 +630,7 @@ public class MainActivity extends FragmentActivity {
 
 		/******************* データベースから位置情報を取得 ********************/
 		request = new Http.Request();
-		request.url = "http://10.110.129.177/get_mysql.php";
+		request.url = "http://10.29.31.119/get_mysql.php";
 		// 同期通信　タイムアウト8秒
 		response = Http.requestSync(request, JSONResponseHandler.getInstance());
 		// タイムアウトした場合はトーストで知らせる
@@ -632,6 +638,9 @@ public class MainActivity extends FragmentActivity {
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			return;
 		}
+		
+		set_footprint();
+		options3.icon(footprint);
 
 		json = (String) response.value;
 
@@ -684,6 +693,31 @@ public class MainActivity extends FragmentActivity {
 			case 2:
 				icon = BitmapDescriptorFactory
 						.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
+				break;
+			case 3:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.akaka);
+				break;
+			case 4:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.cat);
+				break;
+			case 5:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.kuma);
+				break;
+			case 6:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.obake);
+				break;
+			case 7:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.pen);
+				break;
+			case 8:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.pengin);
+				break;
+			case 9:
+				icon = BitmapDescriptorFactory.fromResource(R.drawable.toge);
+				break;
+			case 10:
+				icon = BitmapDescriptorFactory
+						.fromResource(R.drawable.yajirushi);
 				break;
 			}
 			options1.icon(icon);
@@ -807,10 +841,64 @@ public class MainActivity extends FragmentActivity {
 			icon = BitmapDescriptorFactory
 					.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
 			icon_id = 2;
+		} else if (list_result.equals("akaka")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.akaka);
+			icon_id = 3;
+		} else if (list_result.equals("cat")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.cat);
+			icon_id = 4;
+		} else if (list_result.equals("kuma")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.kuma);
+			icon_id = 5;
+
+		} else if (list_result.equals("obake")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.obake);
+			icon_id = 6;
+
+		} else if (list_result.equals("pen")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.pen);
+			icon_id = 7;
+
+		} else if (list_result.equals("pengin")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.pengin);
+			icon_id = 8;
+
+		} else if (list_result.equals("toge")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.toge);
+			icon_id = 9;
+
+		} else if (list_result.equals("yajirushi")) {
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.yajirushi);
+			icon_id = 10;
+
 		}
 	}
 
 	/**********************************************************************************************/
+
+	/****************************** 使用する足跡を設定する ************************************/
+	public void set_footprint() {
+		String footprint_result = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
+		if (footprint_result.equals("a_hito")) {
+			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_hito);
+		} else if (footprint_result.equals("a_kaiju")) {
+			footprint = BitmapDescriptorFactory
+					.fromResource(R.drawable.a_kaiju);
+		} else if (footprint_result.equals("a_kutsu")) {
+			footprint = BitmapDescriptorFactory
+					.fromResource(R.drawable.a_kutsu);
+		} else if (footprint_result.equals("a_neko")) {
+			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_neko);
+		} else if (footprint_result.equals("a_tensen")) {
+			footprint = BitmapDescriptorFactory
+					.fromResource(R.drawable.a_tensen);
+		} else if (footprint_result.equals("a_tori")) {
+			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_tori);
+		}
+	}
+
+	/*******************************************************************************************/
 
 	/********** 初期設定において、入力された名前が"Unselected"のままの場合は、再入力させる **********/
 	public void first_setting() {
@@ -837,7 +925,7 @@ public class MainActivity extends FragmentActivity {
 		icon_color();
 
 		request = new Http.Request();
-		request.url = "http://10.110.129.177/check_duplication.php";
+		request.url = "http://10.29.31.119/check_duplication.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		// 同期通信　タイムアウト8秒
@@ -878,7 +966,7 @@ public class MainActivity extends FragmentActivity {
 		// 重複していなかった場合、データベースに名前とマーカー情報を登録する
 		else {
 			request = new Http.Request();
-			request.url = "http://10.110.129.177/set_iconID_and_name.php";
+			request.url = "http://10.29.31.119/set_iconID_and_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING,
@@ -918,7 +1006,7 @@ public class MainActivity extends FragmentActivity {
 
 			// データベースから割り振られるユーザIDを受信する
 			request = new Http.Request();
-			request.url = "http://10.110.129.177/get_my_id.php";
+			request.url = "http://10.29.31.119/get_my_id.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信 タイムアウト8秒
@@ -970,7 +1058,7 @@ public class MainActivity extends FragmentActivity {
 
 			// 重複チェック
 			request = new Http.Request();
-			request.url = "http://10.110.129.177/check_duplication.php";
+			request.url = "http://10.29.31.119/check_duplication.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信　タイムアウト8秒
@@ -1010,7 +1098,7 @@ public class MainActivity extends FragmentActivity {
 			// 重複していなかった場合は、データベースを更新する
 			else {
 				request = new Http.Request();
-				request.url = "http://10.110.129.177/change_name.php";
+				request.url = "http://10.29.31.119/change_name.php";
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 						"name_result", name_result));
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
@@ -1063,7 +1151,7 @@ public class MainActivity extends FragmentActivity {
 		icon_color();
 
 		request = new Http.Request();
-		request.url = "http://10.110.129.177/change_icon_id.php";
+		request.url = "http://10.29.31.119/change_icon_id.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "ICON_ID",

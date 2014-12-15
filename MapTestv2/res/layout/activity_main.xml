@@ -83,7 +83,8 @@
                     <Button
                         android:id="@+id/User"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_friends" />
                 </LinearLayout>
             </HorizontalScrollView>
         </com.example.maptest.WrappingSlidingDrawer>

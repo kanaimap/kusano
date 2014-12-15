@@ -15,6 +15,12 @@
             android:key="list"
             android:summary="@string/list_summary"
             android:title="@string/list_title" />
+        <ListPreference
+            android:dialogTitle="@string/ashiato_dialogtitle"
+            android:entries="@array/ashiato_entries"
+            android:entryValues="@array/ashiato_entryvalues"
+            android:key="ashiato"
+            android:title="@string/ashiato_title" />
 
         <EditTextPreference
             android:dialogTitle="@string/comment_dialogtitle"
