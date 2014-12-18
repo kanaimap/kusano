@@ -99,7 +99,7 @@ public class MainActivity extends FragmentActivity {
 	String before_list;
 	// マーカーに付与するコメントを保管する変数
 	String comment;
-	
+
 	String footprint_result;
 
 	// 名前の重複チェック用変数
@@ -119,6 +119,7 @@ public class MainActivity extends FragmentActivity {
 	boolean flag1 = false;
 	// 設定画面において、マーカー削除ボタンが押された場合にtureとなるフラグ
 	boolean flag2 = false;
+
 	// サーバーが稼働しているか否かを格納するフラグ
 	boolean server = false;
 
@@ -158,7 +159,7 @@ public class MainActivity extends FragmentActivity {
 		userid = (String) sharedpreferences.getString("userid", "Unselected");
 		footprint_result = (String) sharedpreferences.getString("ashiato",
 				"Unselected");
-		
+
 		icon_color();
 		options1.icon(icon);
 
@@ -167,7 +168,6 @@ public class MainActivity extends FragmentActivity {
 		map = ((SupportMapFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.map)).getMap();
 		MapsInitializer.initialize(this);
-
 
 		// 現在地強調表示用のoptionの設定
 		options4.icon(BitmapDescriptorFactory
@@ -191,7 +191,7 @@ public class MainActivity extends FragmentActivity {
 			flag1 = true;
 			Editor editor = sharedpreferences.edit();
 			editor.putString("list", "totoro");
-			editor.putString("ashiato","a_hito");
+			editor.putString("ashiato", "a_hito");
 			editor.commit();
 			list_result = (String) sharedpreferences.getString("list",
 					"Unselected");
@@ -638,7 +638,7 @@ public class MainActivity extends FragmentActivity {
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			return;
 		}
-		
+
 		set_footprint();
 		options3.icon(footprint);
 
@@ -727,92 +727,145 @@ public class MainActivity extends FragmentActivity {
 					+ database_name.get(i));
 			all_marker_list.add(map.addMarker(options1));
 
-			if (i != 0) {
-				// ひとつ前のマーカーと現在のマーカーとでユーザが異なる場合、ひとつ前のマーカーに重ねるように現在地強調表示用のマーカーを配置する
-				if (!(database_name.get(i - 1).equals(database_name.get(i)))
-						&& !(database_name.get(i - 1).equals(name_result))
-						&& (i != (database_number - 1))) {
-					LatLng position2 = new LatLng(database_latitude.get(i - 1),
-							database_longitude.get(i - 1));
-					options4.title("今ここ!");
-					options4.snippet("at " + database_time.get(i) + " by"
-							+ database_name.get(i));
-					options4.position(position2);
-					all_marker_list.add(map.addMarker(options4));
-				}
-				// 配置したマーカーが最後であり、かつ自分のマーカーでない場合、配置したマーカーに重ねるように現在地強調表示用のマーカーを配置する
-				else if (i == (database_number - 1)
-						&& !(database_name.get(i).equals(name_result))) {
-					LatLng position2 = new LatLng(database_latitude.get(i),
-							database_longitude.get(i));
-					options4.title("今ここ!");
-					options4.snippet("at " + database_time.get(i) + " by"
-							+ database_name.get(i));
-					options4.position(position2);
-					all_marker_list.add(map.addMarker(options4));
-				}
-			}
+		}
 
-			if (i != 0 && i < database_number) {
-				if (database_name.get(i).equals(database_name.get(i - 1))) {
-					// 2点間の距離を格納する変数
-					double distance;
-					// 配置する足跡の数を格納する変数
-					int footprint_number;
-					// 2点間の距離を求める
-					distance = distance(database_latitude.get(i - 1),
-							database_latitude.get(i),
-							database_longitude.get(i - 1),
-							database_longitude.get(i)) * 1000;
-					// 配置する足跡の数を求める
-					int footprint_interval = Integer
+		// 配列のクリア
+		database_name.clear();
+		database_latitude.clear();
+		database_longitude.clear();
+		database_time.clear();
+		database_id.clear();
+		database_comment.clear();
+		database_number = 0;
+
+		/******************* データベースから位置情報を取得 ********************/
+		request = new Http.Request();
+		request.url = "http://10.29.31.119/get_mysql_now.php";
+		// 同期通信　タイムアウト8秒
+		response = Http.requestSync(request, JSONResponseHandler.getInstance());
+		// タイムアウトした場合はトーストで知らせる
+		if ((((String) response.value)).equals("404")) {
+			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		set_footprint();
+		options3.icon(footprint);
+
+		json = (String) response.value;
+
+		// データベースから受け取ったJSON形式のデータを分解し、配列に格納する
+		try {
+			JSONArray jsonArray = new JSONArray(json);
+
+			database_number = jsonArray.length();
+
+			for (int i = 0; i < database_number; i++) {
+
+				JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+				database_name.add(jsonObject.getString("name"));
+				database_latitude.add(jsonObject.getDouble("latitude"));
+				database_longitude.add(jsonObject.getDouble("longitude"));
+				database_time.add(jsonObject.getString("time"));
+				database_id.add(jsonObject.getInt("icon_id"));
+				database_comment.add(jsonObject.getString("comment"));
+			}
+			jsonArray = null;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		/***********************************************************************/
+
+		int temp = 0;
+		int footprint_interval = 500;
+
+		for (int i = 1; i < database_number; ++i) {
+			if (database_name.get(temp).equals(database_name.get(i))) {
+				// 2点間の距離を格納する変数
+				double distance;
+				// 配置する足跡の数を格納する変数
+				int footprint_number;
+				// 2点間の距離を求める
+				distance = distance(database_latitude.get(temp),
+						database_latitude.get(i), database_longitude.get(temp),
+						database_longitude.get(i)) * 1000;
+				// 配置する足跡の数を求める
+				if (((String) sharedpreferences.getString("interval", "500"))
+						.equals(""))
+					;
+				else {
+					footprint_interval = Integer
 							.parseInt((String) sharedpreferences.getString(
 									"interval", "500"));
-					footprint_number = (int) (distance / footprint_interval);
+				}
+				footprint_number = (int) (distance / footprint_interval);
 
-					double footprint_latitude;
-					double footprint_longitude;
-					double footprint_X, footprint_Y, deg, angle;
-					float footprint_angle;
-					for (int j = 0; j < footprint_number - 1; j++) {
-						// 足跡を配置する位置を求める
-						footprint_latitude = database_latitude.get(i - 1)
-								+ (database_latitude.get(i) - database_latitude
-										.get(i - 1)) * (j + 1)
-								/ footprint_number;
-						footprint_longitude = database_longitude.get(i - 1)
-								+ (database_longitude.get(i) - database_longitude
-										.get(i - 1)) * (j + 1)
-								/ footprint_number;
-						LatLng foot_temp = new LatLng(footprint_latitude,
-								footprint_longitude);
+				double footprint_latitude;
+				double footprint_longitude;
+				double footprint_X, footprint_Y, deg, angle;
+				float footprint_angle;
+				for (int j = 0; j < footprint_number - 1; j++) {
+					// 足跡を配置する位置を求める
+					footprint_latitude = database_latitude.get(temp)
+							+ (database_latitude.get(i) - database_latitude
+									.get(temp)) * (j + 1) / footprint_number;
+					footprint_longitude = database_longitude.get(temp)
+							+ (database_longitude.get(i) - database_longitude
+									.get(temp)) * (j + 1) / footprint_number;
+					LatLng foot_temp = new LatLng(footprint_latitude,
+							footprint_longitude);
 
-						// 足跡の向きを求める
-						footprint_X = cos(database_latitude.get(i - 1))
-								* sin(database_latitude.get(i))
-								- sin(database_latitude.get(i - 1))
-								* cos(database_latitude.get(i))
-								* cos(database_longitude.get(i)
-										- database_longitude.get(i - 1));
-						footprint_Y = sin(database_longitude.get(i)
-								- database_longitude.get(i - 1))
-								* cos(database_latitude.get(i));
-						deg = toDegrees(atan2(footprint_Y, footprint_X));
-						angle = (deg + 360) % 360;
-						footprint_angle = (float) (abs(angle) + (1 / 7200));
+					// 足跡の向きを求める
+					footprint_X = cos(database_latitude.get(temp))
+							* sin(database_latitude.get(i))
+							- sin(database_latitude.get(temp))
+							* cos(database_latitude.get(i))
+							* cos(database_longitude.get(i)
+									- database_longitude.get(temp));
+					footprint_Y = sin(database_longitude.get(i)
+							- database_longitude.get(temp))
+							* cos(database_latitude.get(i));
+					deg = toDegrees(atan2(footprint_Y, footprint_X));
+					angle = (deg + 360) % 360;
+					footprint_angle = (float) (abs(angle) + (1 / 7200));
 
-						// 足跡を配置する
-						options3.position(foot_temp);
-						if (footprint_angle < 0) {
-							footprint_angle = -footprint_angle;
-						} else {
-							footprint_angle = 360 - footprint_angle;
-						}
-						options3.rotation(footprint_angle);
-						all_marker_list.add(map.addMarker(options3));
+					// 足跡を配置する
+					options3.position(foot_temp);
+					if (footprint_angle < 0) {
+						footprint_angle = -footprint_angle;
+					} else {
+						footprint_angle = 360 - footprint_angle;
 					}
+					options3.rotation(footprint_angle);
+					all_marker_list.add(map.addMarker(options3));
 				}
 			}
+			// ひとつ前のマーカーと現在のマーカーとでユーザが異なる場合、ひとつ前のマーカーに重ねるように現在地強調表示用のマーカーを配置する
+			if (!(database_name.get(temp).equals(database_name.get(i)))
+					&& !(database_name.get(temp).equals(name_result))
+					&& (i != (database_number - 1))) {
+				LatLng position2 = new LatLng(database_latitude.get(temp),
+						database_longitude.get(temp));
+				options4.title("今ここ!");
+				options4.snippet("at " + database_time.get(temp) + " by"
+						+ database_name.get(temp));
+				options4.position(position2);
+				all_marker_list.add(map.addMarker(options4));
+			}
+			// 配置したマーカーが最後であり、かつ自分のマーカーでない場合、配置したマーカーに重ねるように現在地強調表示用のマーカーを配置する
+			else if (i == (database_number - 1)
+					&& !(database_name.get(temp).equals(name_result))) {
+				LatLng position2 = new LatLng(database_latitude.get(i),
+						database_longitude.get(i));
+				options4.title("今ここ!");
+				options4.snippet("at " + database_time.get(i) + " by"
+						+ database_name.get(i));
+				options4.position(position2);
+				all_marker_list.add(map.addMarker(options4));
+			}
+			temp = i;
+
 		}
 		/**********************************************************************************************/
 		// 配列のクリア
@@ -822,6 +875,7 @@ public class MainActivity extends FragmentActivity {
 		database_time.clear();
 		database_id.clear();
 		database_comment.clear();
+		database_number = 0;
 	}
 
 	/*********************************************************************************************************************************************/
@@ -878,8 +932,8 @@ public class MainActivity extends FragmentActivity {
 
 	/****************************** 使用する足跡を設定する ************************************/
 	public void set_footprint() {
-		String footprint_result = (String) sharedpreferences.getString("ashiato",
-				"Unselected");
+		String footprint_result = (String) sharedpreferences.getString(
+				"ashiato", "Unselected");
 		if (footprint_result.equals("a_hito")) {
 			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_hito);
 		} else if (footprint_result.equals("a_kaiju")) {

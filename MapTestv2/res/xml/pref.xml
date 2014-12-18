@@ -36,8 +36,8 @@
 
         <Preference
             android:key="button1"
-            android:summary="マーカー削除"
-            android:title="マーカー削除" />
+            android:summary="マーカー全削除"
+            android:title="マーカー全削除" />
     </PreferenceCategory>
 
 </PreferenceScreen>

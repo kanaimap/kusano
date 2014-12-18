@@ -381,8 +381,8 @@ int id AutoB 0x7f080055
 int id Clear2B 0x7f080053
 int id DoukiB 0x7f080054
 int id NowB 0x7f080052
-int id SettingB 0x7f080056
-int id User 0x7f080057
+int id SettingB 0x7f080057
+int id User 0x7f080056
 int id action_bar 0x7f08002e
 int id action_bar_activity_content 0x7f080027
 int id action_bar_container 0x7f08002d

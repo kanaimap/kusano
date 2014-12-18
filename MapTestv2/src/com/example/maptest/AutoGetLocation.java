@@ -18,7 +18,7 @@ import android.widget.Toast;
 //バックグラウンドで位置情報を取得し、データベースに送信するService
 public class AutoGetLocation extends Service implements LocationListener {
 	private final static long mintime = 0;
-	private final static float mindistance = 0;
+	private final static float mindistance = 300;
 	
 	boolean p;
 	String name_result;

@@ -59,6 +59,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/custom_clear2b"
+                        android:textOff=" "
+                        android:textOn=" "
                         android:checked="true" />
 
                     <Button
@@ -75,16 +77,16 @@
                         android:checked="false" />
 
                     <Button
-                        android:id="@+id/SettingB"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/custom_setting" />
-
-                    <Button
                         android:id="@+id/User"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/custom_friends" />
+                    
+                    <Button
+                        android:id="@+id/SettingB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/custom_setting" />
                 </LinearLayout>
             </HorizontalScrollView>
         </com.example.maptest.WrappingSlidingDrawer>
