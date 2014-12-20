@@ -24,7 +24,7 @@ if(isset($name))
 	}
 	else
 	{
-		echo "none";
+		echo $name;
 	}
 	mysql_free_result($rs);
 	mysql_close($dbHandle);

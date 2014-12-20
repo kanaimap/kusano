@@ -2,7 +2,6 @@
 
 $icon_id = $_POST['ICON_ID'];
 $name = $_POST['name'];
-$footprint_id = $_POST['footprint_id'];
 
 if(isset($icon_id))
 {
@@ -17,7 +16,7 @@ if(isset($icon_id))
 	
 	$db = 'map';
 	
-	$sql = "UPDATE icon SET icon_id = '$icon_id' ,  footprint_id = '$footprint_id' WHERE name = '$name'";
+	$sql = "UPDATE icon SET icon_id = '$icon_id' WHERE name = '$name'";
 	
 	$rs = mysql_db_query($db,$sql);
 	if (!$rs)

@@ -2,7 +2,6 @@
 
 $name = $_POST['name'];
 $icon_id = $_POST['ICON_ID'];
-$footprint_id = $_POST['footprint_id'];
 
 if(isset($name))
 {
@@ -18,8 +17,8 @@ if(isset($name))
 	$db = 'map';
 	
 		
-	$sql = "INSERT INTO icon (name,icon_id,footprint_id)
-		VALUES ('$name','$icon_id','$footprint_id')";
+	$sql = "INSERT INTO icon (name,icon_id)
+		VALUES ('$name','$icon_id')";
 	
 	$rs = mysql_db_query($db,$sql);
 		
