@@ -10,7 +10,7 @@
     <string name="timer_OFF">自動更新OFF</string>
     <string name="put_marker">マーカー配置</string>
     <string name="setting">setting</string>
-	<string name="list_title">マーカーの色</string>
+	<string name="list_title">マーカー</string>
 	<string name="list_summary">list_summary</string>
 	<string name="list_dialogtitle">list_dialogtitle</string>
 	<string name="name_title">User name</string>

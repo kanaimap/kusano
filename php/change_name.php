@@ -3,6 +3,7 @@
 $name_result = $_POST['name_result'];
 $before_name = $_POST['before_name'];
 $icon_id = $_POST['icon_id'];
+$footprint_id = $_POST['footprint_id'];
 
 if(isset($name_result))
 {
@@ -21,7 +22,7 @@ if(isset($name_result))
 	
 	$rs = mysql_db_query($db,$sql);
 	
-	$sql = "UPDATE icon SET name = '$name_result' , icon_id = '$icon_id' WHERE name  = '$before_name'";
+	$sql = "UPDATE icon SET name = '$name_result' , icon_id = '$icon_id' , footprint_id = '$footprint_id' WHERE name  = '$before_name'";
 	
 	$rs = mysql_db_query($db,$sql);
 	

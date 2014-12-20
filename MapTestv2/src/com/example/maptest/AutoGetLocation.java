@@ -86,7 +86,7 @@ public class AutoGetLocation extends Service implements LocationListener {
 		longitude = location.getLongitude();
 
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/insert_mysql.php";
+		request.url = "http:///*IP*//insert_mysql.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lat",String.valueOf(latitude)));
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "lon", String.valueOf(longitude)));
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "time", time));
