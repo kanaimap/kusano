@@ -26,7 +26,7 @@ public class MemberList extends Activity {
 	  lv = (ListView) findViewById(R.id.memberlist);
 
 	  request = new Http.Request();
-	  request.url = "http://10.29.31.119/get_all_name.php";
+	  request.url = "http://192.168.10.102/get_all_name.php";
 	  //同期通信　タイムアウト8秒
 	  response = Http.requestSync(request, JSONResponseHandler.getInstance());
 	  //タイムアウトした場合、警告をだし、MainActivityへ戻る

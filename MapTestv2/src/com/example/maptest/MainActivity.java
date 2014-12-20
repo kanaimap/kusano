@@ -80,6 +80,8 @@ public class MainActivity extends FragmentActivity {
 	// 使用アイコン
 	int icon_id;
 
+	int footprint_id;
+
 	// ユーザーID
 	String userid;
 
@@ -101,6 +103,7 @@ public class MainActivity extends FragmentActivity {
 	String comment;
 
 	String footprint_result;
+	String before_footprint;
 
 	// 名前の重複チェック用変数
 	String check = "";
@@ -114,6 +117,7 @@ public class MainActivity extends FragmentActivity {
 	ArrayList<String> database_name = new ArrayList<String>();
 	ArrayList<String> database_time = new ArrayList<String>();
 	ArrayList<String> database_comment = new ArrayList<String>();
+	ArrayList<Integer> database_footprint = new ArrayList<Integer>();
 
 	// 初期設定が必要であるかを判断するフラグ
 	boolean flag1 = false;
@@ -159,8 +163,11 @@ public class MainActivity extends FragmentActivity {
 		userid = (String) sharedpreferences.getString("userid", "Unselected");
 		footprint_result = (String) sharedpreferences.getString("ashiato",
 				"Unselected");
+		before_footprint = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
 
 		icon_color();
+		set_footprint();
 		options1.icon(icon);
 
 		// マップを表示する
@@ -197,11 +204,15 @@ public class MainActivity extends FragmentActivity {
 					"Unselected");
 			before_list = (String) sharedpreferences.getString("list",
 					"Unselected");
+			footprint_result = (String) sharedpreferences.getString("ashiato",
+					"Unselected");
+			before_footprint = (String) sharedpreferences.getString("ashiato",
+					"Unselected");
 		}
 
 		/****************************** サーバーの稼働状況を調べる *******************************/
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/check_server.php";
+		request.url = "http://192.168.10.102/check_server.php";
 
 		// requestSyncは通信終了まで待機する同期通信用メソッド
 		// 8秒でタイムアウトするように設定してあり、タイムアウトした場合は"404"という文字列が返ってくる
@@ -236,7 +247,7 @@ public class MainActivity extends FragmentActivity {
 		/************** 端末側の名前とデータベース側の名前の矛盾をチェックする ****************/
 		if (!flag1 && server) {
 			request = new Http.Request();
-			request.url = "http://10.29.31.119/check_name.php";
+			request.url = "http://192.168.10.102/check_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "id",
@@ -349,6 +360,14 @@ public class MainActivity extends FragmentActivity {
 		}
 		/*****************************************************************************************************/
 
+		/******************* flag1がfalseかつ足跡が変更されいれば、足跡変更処理へ ********************/
+		else if (!flag1
+				&& !((String) sharedpreferences.getString("ashiato",
+						"Unselected")).equals(footprint_result) && server) {
+			change_footprint();
+		}
+		/**********************************************************************************************/
+
 		/******************************** マーカーの全削除 *******************************/
 		if (flag2 && server) {
 			if (all_marker_list.size() > 0) {
@@ -403,7 +422,7 @@ public class MainActivity extends FragmentActivity {
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.29.31.119/insert_mysql.php";
+						request.url = "http://192.168.10.102/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -466,7 +485,6 @@ public class MainActivity extends FragmentActivity {
 					// アイコンを配置
 					options1.title(comment);
 					options1.snippet("at " + time + " by" + name_result);
-					map.addMarker(options1);
 					all_marker_list.add(map.addMarker(options1));
 
 					// メッセージボックスを表示し、マーカーを配置したことを知らせる
@@ -484,7 +502,7 @@ public class MainActivity extends FragmentActivity {
 
 					if (server) {
 						request = new Http.Request();
-						request.url = "http://10.29.31.119/insert_mysql.php";
+						request.url = "http://192.168.10.102/insert_mysql.php";
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "lat", String
 										.valueOf(mylat)));
@@ -496,7 +514,7 @@ public class MainActivity extends FragmentActivity {
 						request.params.add(new Http.Param(
 								Http.Param.TYPE_STRING, "name", name_result));
 						request.params.add(new Http.Param(
-								Http.Param.TYPE_STRING, "comment", "今ここ"));
+								Http.Param.TYPE_STRING, "comment", "今ここ！"));
 						// 非同期通信
 						Http.request(request,
 								StringResponseHandler.getInstance());
@@ -511,9 +529,11 @@ public class MainActivity extends FragmentActivity {
 		if (!server) {
 			name_result = before_name;
 			list_result = before_list;
+			footprint_result = before_footprint;
 			Editor editor = sharedpreferences.edit();
 			editor.putString("name", name_result);
 			editor.putString("list", list_result);
+			editor.putString("ashiato", footprint_result);
 			editor.commit();
 		}
 		/**************************************************************************/
@@ -630,7 +650,7 @@ public class MainActivity extends FragmentActivity {
 
 		/******************* データベースから位置情報を取得 ********************/
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/get_mysql.php";
+		request.url = "http://192.168.10.102/get_mysql.php";
 		// 同期通信　タイムアウト8秒
 		response = Http.requestSync(request, JSONResponseHandler.getInstance());
 		// タイムアウトした場合はトーストで知らせる
@@ -638,9 +658,6 @@ public class MainActivity extends FragmentActivity {
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			return;
 		}
-
-		set_footprint();
-		options3.icon(footprint);
 
 		json = (String) response.value;
 
@@ -737,10 +754,11 @@ public class MainActivity extends FragmentActivity {
 		database_id.clear();
 		database_comment.clear();
 		database_number = 0;
+		/*********************************************************************************************/
 
-		/******************* データベースから位置情報を取得 ********************/
+		/******************* データベースからコメントが"今ここ！"となっている位置情報を取得 ********************/
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/get_mysql_now.php";
+		request.url = "http://192.168.10.102/get_mysql_now.php";
 		// 同期通信　タイムアウト8秒
 		response = Http.requestSync(request, JSONResponseHandler.getInstance());
 		// タイムアウトした場合はトーストで知らせる
@@ -770,13 +788,15 @@ public class MainActivity extends FragmentActivity {
 				database_time.add(jsonObject.getString("time"));
 				database_id.add(jsonObject.getInt("icon_id"));
 				database_comment.add(jsonObject.getString("comment"));
+				database_footprint.add(jsonObject.getInt("footprint_id"));
 			}
 			jsonArray = null;
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		/***********************************************************************/
+		/******************************************************************************************************/
 
+		/***************************************** 足跡を配置 *************************************************/
 		int temp = 0;
 		int footprint_interval = 500;
 
@@ -830,6 +850,35 @@ public class MainActivity extends FragmentActivity {
 					angle = (deg + 360) % 360;
 					footprint_angle = (float) (abs(angle) + (1 / 7200));
 
+					// 使用するマーカーの画像を設定
+					switch (database_footprint.get(i)) {
+					case 0:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_hito);
+						break;
+					case 1:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_kaiju);
+						break;
+					case 2:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_kutsu);
+						break;
+					case 3:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_neko);
+						break;
+					case 4:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_tensen);
+						break;
+					case 5:
+						footprint = BitmapDescriptorFactory
+								.fromResource(R.drawable.a_tori);
+						break;
+					}
+					options3.icon(footprint);
+
 					// 足跡を配置する
 					options3.position(foot_temp);
 					if (footprint_angle < 0) {
@@ -843,8 +892,7 @@ public class MainActivity extends FragmentActivity {
 			}
 			// ひとつ前のマーカーと現在のマーカーとでユーザが異なる場合、ひとつ前のマーカーに重ねるように現在地強調表示用のマーカーを配置する
 			if (!(database_name.get(temp).equals(database_name.get(i)))
-					&& !(database_name.get(temp).equals(name_result))
-					&& (i != (database_number - 1))) {
+					&& !(database_name.get(temp).equals(name_result))) {
 				LatLng position2 = new LatLng(database_latitude.get(temp),
 						database_longitude.get(temp));
 				options4.title("今ここ!");
@@ -855,7 +903,7 @@ public class MainActivity extends FragmentActivity {
 			}
 			// 配置したマーカーが最後であり、かつ自分のマーカーでない場合、配置したマーカーに重ねるように現在地強調表示用のマーカーを配置する
 			else if (i == (database_number - 1)
-					&& !(database_name.get(temp).equals(name_result))) {
+					&& !(database_name.get(i).equals(name_result))) {
 				LatLng position2 = new LatLng(database_latitude.get(i),
 						database_longitude.get(i));
 				options4.title("今ここ!");
@@ -867,7 +915,7 @@ public class MainActivity extends FragmentActivity {
 			temp = i;
 
 		}
-		/**********************************************************************************************/
+		/******************************************************************************************************/
 		// 配列のクリア
 		database_name.clear();
 		database_latitude.clear();
@@ -875,6 +923,7 @@ public class MainActivity extends FragmentActivity {
 		database_time.clear();
 		database_id.clear();
 		database_comment.clear();
+		database_footprint.clear();
 		database_number = 0;
 	}
 
@@ -936,19 +985,25 @@ public class MainActivity extends FragmentActivity {
 				"ashiato", "Unselected");
 		if (footprint_result.equals("a_hito")) {
 			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_hito);
+			footprint_id = 0;
 		} else if (footprint_result.equals("a_kaiju")) {
 			footprint = BitmapDescriptorFactory
 					.fromResource(R.drawable.a_kaiju);
+			footprint_id = 1;
 		} else if (footprint_result.equals("a_kutsu")) {
 			footprint = BitmapDescriptorFactory
 					.fromResource(R.drawable.a_kutsu);
+			footprint_id = 2;
 		} else if (footprint_result.equals("a_neko")) {
 			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_neko);
+			footprint_id = 3;
 		} else if (footprint_result.equals("a_tensen")) {
 			footprint = BitmapDescriptorFactory
 					.fromResource(R.drawable.a_tensen);
+			footprint_id = 4;
 		} else if (footprint_result.equals("a_tori")) {
 			footprint = BitmapDescriptorFactory.fromResource(R.drawable.a_tori);
+			footprint_id = 5;
 		}
 	}
 
@@ -959,11 +1014,15 @@ public class MainActivity extends FragmentActivity {
 		Toast.makeText(this, "Unselected以外の名前を登録してください", Toast.LENGTH_LONG)
 				.show();
 		list_result = before_list;
+		footprint_result = before_footprint;
 		icon_color();
+		set_footprint();
 		Editor editor = sharedpreferences.edit();
 		editor.putString("name", name_result);
 		editor.commit();
 		editor.putString("list", list_result);
+		editor.commit();
+		editor.putString("ashiato", footprint_result);
 		editor.commit();
 		startActivity(new Intent(this, Setting.class));
 	}
@@ -976,10 +1035,13 @@ public class MainActivity extends FragmentActivity {
 				.getString("name", "Unselected");
 		list_result = (String) sharedpreferences
 				.getString("list", "Unselected");
+		footprint_result = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
 		icon_color();
+		set_footprint();
 
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/check_duplication.php";
+		request.url = "http://192.168.10.102/check_duplication.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		// 同期通信　タイムアウト8秒
@@ -995,10 +1057,15 @@ public class MainActivity extends FragmentActivity {
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			name_result = before_name;
 			list_result = before_list;
+			footprint_result = before_footprint;
+			icon_color();
+			set_footprint();
 			Editor editor = sharedpreferences.edit();
 			editor.putString("name", name_result);
 			editor.commit();
 			editor.putString("list", list_result);
+			editor.commit();
+			editor.putString("ashiato", footprint_result);
 			editor.commit();
 			return;
 		}
@@ -1008,23 +1075,29 @@ public class MainActivity extends FragmentActivity {
 			Toast.makeText(this, "その名前は既に利用されています", Toast.LENGTH_LONG).show();
 			name_result = before_name;
 			list_result = before_list;
+			footprint_result = before_footprint;
 			icon_color();
+			set_footprint();
 			check = "";
 			Editor editor = sharedpreferences.edit();
 			editor.putString("name", name_result);
 			editor.commit();
 			editor.putString("list", list_result);
 			editor.commit();
+			editor.putString("ashiato", footprint_result);
+			editor.commit();
 			startActivity(new Intent(this, Setting.class));
 		}
 		// 重複していなかった場合、データベースに名前とマーカー情報を登録する
 		else {
 			request = new Http.Request();
-			request.url = "http://10.29.31.119/set_iconID_and_name.php";
+			request.url = "http://192.168.10.102/set_iconID_and_name.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 					"ICON_ID", String.valueOf(icon_id)));
+			request.params.add(new Http.Param(Http.Param.TYPE_STRING,
+					"footprint_id", String.valueOf(footprint_id)));
 			// 同期通信 タイムアウト8秒
 			response = Http.requestSync(request,
 					StringResponseHandler.getInstance());
@@ -1034,10 +1107,15 @@ public class MainActivity extends FragmentActivity {
 				Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 				name_result = before_name;
 				list_result = before_list;
+				footprint_result = before_footprint;
+				icon_color();
+				set_footprint();
 				Editor editor = sharedpreferences.edit();
 				editor.putString("name", name_result);
 				editor.commit();
 				editor.putString("list", list_result);
+				editor.commit();
+				editor.putString("ashiato", footprint_result);
 				editor.commit();
 				return;
 			}
@@ -1056,11 +1134,14 @@ public class MainActivity extends FragmentActivity {
 
 			before_name = name_result;
 			before_list = list_result;
+			before_footprint = footprint_result;
+			icon_color();
+			set_footprint();
 			flag1 = false; // 初期設定が終了したため、flag1をfalseにする
 
 			// データベースから割り振られるユーザIDを受信する
 			request = new Http.Request();
-			request.url = "http://10.29.31.119/get_my_id.php";
+			request.url = "http://192.168.10.102/get_my_id.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信 タイムアウト8秒
@@ -1095,10 +1176,15 @@ public class MainActivity extends FragmentActivity {
 					.show();
 			name_result = before_name;
 			list_result = before_list;
+			footprint_result = before_footprint;
+			icon_color();
+			set_footprint();
 			Editor editor = sharedpreferences.edit();
 			editor.putString("name", name_result);
 			editor.commit();
 			editor.putString("list", list_result);
+			editor.commit();
+			editor.putString("ashiato", footprint_result);
 			editor.commit();
 			startActivity(new Intent(this, Setting.class));
 		}
@@ -1108,11 +1194,14 @@ public class MainActivity extends FragmentActivity {
 					"Unselected");
 			list_result = (String) sharedpreferences.getString("list",
 					"Unselected");
+			footprint_result = (String) sharedpreferences.getString("ashiato",
+					"Unselected");
 			icon_color();
+			set_footprint();
 
 			// 重複チェック
 			request = new Http.Request();
-			request.url = "http://10.29.31.119/check_duplication.php";
+			request.url = "http://192.168.10.102/check_duplication.php";
 			request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 					name_result));
 			// 同期通信　タイムアウト8秒
@@ -1123,10 +1212,15 @@ public class MainActivity extends FragmentActivity {
 				Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 				name_result = before_name;
 				list_result = before_list;
+				footprint_result = before_footprint;
+				icon_color();
+				set_footprint();
 				Editor editor = sharedpreferences.edit();
 				editor.putString("name", name_result);
 				editor.commit();
 				editor.putString("list", list_result);
+				editor.commit();
+				editor.putString("ashiato", footprint_result);
 				editor.commit();
 				return;
 			} else if ((((String) response.value)).equals("duplication")) {
@@ -1137,13 +1231,17 @@ public class MainActivity extends FragmentActivity {
 			if (check.equals("duplication")) {
 				name_result = before_name;
 				list_result = before_list;
+				footprint_result = before_footprint;
 				icon_color();
+				set_footprint();
 				Toast.makeText(this, "その名前は既に利用されています", Toast.LENGTH_LONG)
 						.show();
 				Editor editor = sharedpreferences.edit();
 				editor.putString("name", name_result);
 				editor.commit();
 				editor.putString("list", list_result);
+				editor.commit();
+				editor.putString("ashiato", footprint_result);
 				editor.commit();
 				check = "";
 				startActivity(new Intent(this, Setting.class));
@@ -1152,13 +1250,15 @@ public class MainActivity extends FragmentActivity {
 			// 重複していなかった場合は、データベースを更新する
 			else {
 				request = new Http.Request();
-				request.url = "http://10.29.31.119/change_name.php";
+				request.url = "http://192.168.10.102/change_name.php";
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 						"name_result", name_result));
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 						"before_name", before_name));
 				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
 						"icon_id", String.valueOf(icon_id)));
+				request.params.add(new Http.Param(Http.Param.TYPE_STRING,
+						"footprint_id", String.valueOf(footprint_id)));
 				// 同期通信　タイムアウト8秒
 				Http.requestSync(request, StringResponseHandler.getInstance());
 				// タイムアウトした場合、ロールバックする
@@ -1166,16 +1266,22 @@ public class MainActivity extends FragmentActivity {
 					Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 					name_result = before_name;
 					list_result = before_list;
+					footprint_result = before_footprint;
+					icon_color();
+					set_footprint();
 					Editor editor = sharedpreferences.edit();
 					editor.putString("name", name_result);
 					editor.commit();
 					editor.putString("list", list_result);
+					editor.commit();
+					editor.putString("ashiato", footprint_result);
 					editor.commit();
 					return;
 				}
 
 				before_name = name_result;
 				before_list = list_result;
+				before_footprint = footprint_result;
 
 				// メッセージボックスを表示し、変更が完了したことを知らせる
 				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
@@ -1202,27 +1308,79 @@ public class MainActivity extends FragmentActivity {
 				.getString("name", "Unselected");
 		list_result = (String) sharedpreferences
 				.getString("list", "Unselected");
+		footprint_result = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
+
 		icon_color();
+		set_footprint();
 
 		request = new Http.Request();
-		request.url = "http://10.29.31.119/change_icon_id.php";
+		request.url = "http://192.168.10.102/change_icon_id.php";
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
 				name_result));
 		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "ICON_ID",
 				String.valueOf(icon_id)));
+		request.params.add(new Http.Param(Http.Param.TYPE_STRING,
+				"footprint_id", String.valueOf(footprint_id)));
 		// 同期通信　タイムアウト8秒
 		Http.requestSync(request, StringResponseHandler.getInstance());
 		// タイムアウトした場合、ロールバックする
 		if ((((String) response.value)).equals("404")) {
 			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
 			list_result = before_list;
+			footprint_result = before_footprint;
+			icon_color();
+			set_footprint();
 			Editor editor = sharedpreferences.edit();
 			editor.putString("list", list_result);
+			editor.putString("ashiato", footprint_result);
 			editor.commit();
 			return;
 		}
 
 		before_list = list_result;
+		before_footprint = footprint_result;
+		// メッセージボックスを表示し、変更が完了したことを知らせる
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		alertDialogBuilder.setMessage("変更完了です");
+		alertDialogBuilder.setPositiveButton("OK",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+
+				});
+		alertDialogBuilder.create();
+		alertDialogBuilder.show();
+	}
+
+	/**********************************************************************************/
+
+	/****************** 足跡が変更されたならば、データベースを更新する *******************/
+	public void change_footprint() {
+		name_result = (String) sharedpreferences
+				.getString("name", "Unselected");
+		footprint_result = (String) sharedpreferences.getString("ashiato",
+				"Unselected");
+		set_footprint();
+		request = new Http.Request();
+		request.url = "http://192.168.10.102/change_footprint_id.php";
+		request.params.add(new Http.Param(Http.Param.TYPE_STRING, "name",
+				name_result));
+		request.params.add(new Http.Param(Http.Param.TYPE_STRING,
+				"footprint_id", String.valueOf(footprint_id)));
+		// 同期通信　タイムアウト8秒
+		Http.requestSync(request, StringResponseHandler.getInstance());
+		// タイムアウトした場合、ロールバックする
+		if ((((String) response.value)).equals("404")) {
+			Toast.makeText(this, "タイムアウト", Toast.LENGTH_SHORT).show();
+			footprint_result = before_footprint;
+			set_footprint();
+			Editor editor = sharedpreferences.edit();
+			editor.putString("ashiato", footprint_result);
+			editor.commit();
+			return;
+		}
+		before_footprint = footprint_result;
 		// メッセージボックスを表示し、変更が完了したことを知らせる
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 		alertDialogBuilder.setMessage("変更完了です");

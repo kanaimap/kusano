@@ -7,7 +7,7 @@ if ($dbHandle == False)
 		exit;
 	}
 $db = 'map';
-$sql = "SELECT location.name,location.latitude,location.longitude,location.time,location.comment,icon.icon_id FROM location,icon WHERE location.name = icon.name";
+$sql = "SELECT location.name,location.latitude,location.longitude,location.time,location.comment,icon.icon_id FROM location,icon WHERE location.name = icon.name ORDER BY icon.id , location.time";
 $result = mysql_db_query($db,$sql);
 while ($row = mysql_fetch_assoc($result)) {
     $users[] = array(
